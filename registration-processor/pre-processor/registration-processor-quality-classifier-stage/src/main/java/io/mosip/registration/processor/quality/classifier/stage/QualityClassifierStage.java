@@ -451,7 +451,7 @@ public class QualityClassifierStage extends MosipVerticleAPIManager {
 				long startTime = System.currentTimeMillis();
 				float[] qualityScoreresponse = getBioSdkInstance(biometricType).getSegmentQuality(birArray, null);
 				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), biometricType.name(),
-						"QualityCheckerStage::Time taken to get biometric info - " + (System.currentTimeMillis() - startTime) + " (ms)");
+						"QualityCheckerStage::Time taken for check quality for " + biometricType.name() + " - " + (System.currentTimeMillis() - startTime) + " (ms)");
 				float score = qualityScoreresponse[0];
 				String bioType = bir.getBdbInfo().getType().get(0).value();
 
