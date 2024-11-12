@@ -166,16 +166,16 @@ public class PacketReceiverStage extends MosipVerticleAPIManager {
 			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 					"", "PacketReceiverStage::processPacket()::entry");
 			Entry<FileUpload,File> fileUploadEntry=getFileFromCtx(ctx).entrySet().iterator().next();
-			regProcLogger.debug("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + fileUploadEntry.getKey().uploadedFileName() + " PacketReceiver getFileFromCtx - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
+			regProcLogger.info("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + fileUploadEntry.getKey().uploadedFileName() + " PacketReceiver getFileFromCtx - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
 			file=fileUploadEntry.getValue();
 			temporaryFile=FileUtils.getFile(fileUploadEntry.getKey().uploadedFileName());
-			regProcLogger.debug("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + fileUploadEntry.getKey().uploadedFileName() + " PacketReceiver temporaryFile - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
+			regProcLogger.info("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + fileUploadEntry.getKey().uploadedFileName() + " PacketReceiver temporaryFile - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
 			MessageDTO messageDTO = packetReceiverService.processPacket(file);
-			regProcLogger.debug("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + fileUploadEntry.getKey().uploadedFileName() + " PacketReceiver processPacket - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
+			regProcLogger.info("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + fileUploadEntry.getKey().uploadedFileName() + " PacketReceiver processPacket - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
 			messageDTO.setMessageBusAddress(MessageBusAddress.PACKET_RECEIVER_OUT);
 			if (messageDTO.getIsValid()) {
 				this.sendMessage(messageDTO);
-				regProcLogger.debug("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + fileUploadEntry.getKey().uploadedFileName() + " PacketReceiver sendMessage - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
+				regProcLogger.info("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + fileUploadEntry.getKey().uploadedFileName() + " PacketReceiver sendMessage - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
 			}
 		} catch (IOException e) {
 			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
@@ -183,9 +183,9 @@ public class PacketReceiverStage extends MosipVerticleAPIManager {
 			throw new UnexpectedException(e.getMessage());
 		} finally {
 			deleteFile(file);
-			regProcLogger.debug("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + file.getName() + " PacketReceiver Delete File - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
+			regProcLogger.info("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + file.getName() + " PacketReceiver Delete File - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
 			deleteFile(temporaryFile);
-			regProcLogger.debug("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + temporaryFile.getName() + " PacketReceiver Delete TempFile - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
+			regProcLogger.info("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + temporaryFile.getName() + " PacketReceiver Delete TempFile - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
 		}
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 				"", "PacketReceiverStage::processPacket()::exit");
@@ -206,9 +206,9 @@ public class PacketReceiverStage extends MosipVerticleAPIManager {
 			List<String> listObj = new ArrayList<>();
 			listObj.add(env.getProperty(MODULE_ID));
 			File file=getFileFromCtx(ctx).entrySet().iterator().next().getValue();
-			regProcLogger.debug("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + file.getName() + " PacketReceiver processURL - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
+			regProcLogger.info("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + file.getName() + " PacketReceiver processURL - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
 			MessageDTO messageDTO = packetReceiverService.validatePacket(file, getStageName());
-			regProcLogger.debug("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + file.getName() + " PacketReceiver processURL Validate Packet - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
+			regProcLogger.info("SESSION_ID", LoggerFileConstant.REGISTRATIONID.toString(), "", "Thread - " + file.getName() + " PacketReceiver processURL Validate Packet - " + " Time taken to complete " + TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS));
 			listObj.add(DateUtils.getUTCCurrentDateTimeString(env.getProperty(DATETIME_PATTERN)));
 			listObj.add(env.getProperty(APPLICATION_VERSION));
 			if (messageDTO.getIsValid()) {
