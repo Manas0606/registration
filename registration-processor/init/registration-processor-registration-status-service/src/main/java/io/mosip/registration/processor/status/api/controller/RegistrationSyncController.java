@@ -2,9 +2,11 @@ package io.mosip.registration.processor.status.api.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.util.DateUtils;
 import io.mosip.registration.processor.core.constant.ResponseStatusCode;
 import io.mosip.registration.processor.core.exception.util.PlatformErrorMessages;
+import io.mosip.registration.processor.core.logger.RegProcessorLogger;
 import io.mosip.registration.processor.core.util.DigitalSignatureUtility;
 import io.mosip.registration.processor.status.code.RegistrationStatusCode;
 import io.mosip.registration.processor.status.dto.*;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -44,6 +47,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @Tag(name = "Registration Status", description = "Registration Status Controller")
 public class RegistrationSyncController {
+
+	private static Logger regProcLogger = RegProcessorLogger.getLogger(RegistrationSyncController.class);
 
 	/** The registration status service. */
 	@Autowired
@@ -100,19 +105,23 @@ public class RegistrationSyncController {
 			@RequestHeader(name = "timestamp", required = true) String timeStamp,
 			@RequestBody(required = true) Object encryptedSyncMetaInfo) throws RegStatusAppException {
 		try {
+			Long startTime = System.nanoTime();
 			List<SyncResponseDto> syncResponseList = new ArrayList<>();
 			RegistrationSyncRequestDTO registrationSyncRequestDTO = syncRegistrationService
 					.decryptAndGetSyncRequest(encryptedSyncMetaInfo, referenceId, timeStamp, syncResponseList);
-
+			regProcLogger.debug("SESSION_ID", "REGPROC", "REGPROC", "Time Taken for Decrypt Request Reference Value: " + referenceId + " " + TimeUnit.MILLISECONDS.convert(System.nanoTime()-startTime, TimeUnit.NANOSECONDS));
 			if (registrationSyncRequestDTO != null && validator.validate(registrationSyncRequestDTO,
 					env.getProperty(REG_SYNC_SERVICE_ID), syncResponseList)) {
+				regProcLogger.debug("SESSION_ID", "REGPROC", "REGPROC", "Time Taken for Validate Reference Value: " + referenceId + " " + TimeUnit.MILLISECONDS.convert(System.nanoTime()-startTime, TimeUnit.NANOSECONDS));
 				syncResponseList = syncRegistrationService.sync(registrationSyncRequestDTO.getRequest(), referenceId, timeStamp);
+				regProcLogger.debug("SESSION_ID", "REGPROC", "REGPROC", "Time Taken for Sync Data Reference Value: " + referenceId + " " + TimeUnit.MILLISECONDS.convert(System.nanoTime()-startTime, TimeUnit.NANOSECONDS));
 			}
 			if (isEnabled) {
 				RegSyncResponseDTO responseDto = buildRegistrationSyncResponse(syncResponseList);
 				HttpHeaders headers = new HttpHeaders();
 				headers.add(RESPONSE_SIGNATURE,
 						digitalSignatureUtility.getDigitalSignature(objectMapper.writeValueAsString(responseDto)));
+				regProcLogger.debug("SESSION_ID", "REGPROC", "REGPROC", "Time Taken to build Response Reference Value: " + referenceId + " " + TimeUnit.MILLISECONDS.convert(System.nanoTime()-startTime, TimeUnit.NANOSECONDS));
 				return ResponseEntity.ok().headers(headers).body(responseDto);
 			}
 
@@ -147,19 +156,24 @@ public class RegistrationSyncController {
 			@RequestHeader(name = "timestamp", required = true) String timeStamp,
 			@RequestBody(required = true) Object encryptedSyncMetaInfo) throws RegStatusAppException {
 		try {
+			Long startTime = System.nanoTime();
 			List<SyncResponseDto> syncResponseList = new ArrayList<>();
 			RegistrationSyncRequestDTO registrationSyncRequestDTO = syncRegistrationService
 					.decryptAndGetSyncRequest(encryptedSyncMetaInfo, referenceId, timeStamp, syncResponseList);
+			regProcLogger.debug("SESSION_ID", "REGPROC", "REGPROC", "Time Taken for Decrypt Request Reference Value: " + referenceId + " " + TimeUnit.MILLISECONDS.convert(System.nanoTime()-startTime, TimeUnit.NANOSECONDS));
 
 			if (registrationSyncRequestDTO != null && validator.validate(registrationSyncRequestDTO,
 					env.getProperty(REG_SYNC_SERVICE_ID), syncResponseList)) {
+				regProcLogger.debug("SESSION_ID", "REGPROC", "REGPROC", "Time Taken for Validate Reference Value: " + referenceId + " " + TimeUnit.MILLISECONDS.convert(System.nanoTime()-startTime, TimeUnit.NANOSECONDS));
 				syncResponseList = syncRegistrationService.syncV2(registrationSyncRequestDTO.getRequest(), referenceId, timeStamp);
+				regProcLogger.debug("SESSION_ID", "REGPROC", "REGPROC", "Time Taken for Sync Data Reference Value: " + referenceId + " " + TimeUnit.MILLISECONDS.convert(System.nanoTime()-startTime, TimeUnit.NANOSECONDS));
 			}
 			if (isEnabled) {
 				RegSyncResponseDTO responseDto = buildRegistrationSyncResponse(syncResponseList);
 				HttpHeaders headers = new HttpHeaders();
 				headers.add(RESPONSE_SIGNATURE,
 						digitalSignatureUtility.getDigitalSignature(objectMapper.writeValueAsString(responseDto)));
+				regProcLogger.debug("SESSION_ID", "REGPROC", "REGPROC", "Time Taken to build Response Reference Value: " + referenceId + " " + TimeUnit.MILLISECONDS.convert(System.nanoTime()-startTime, TimeUnit.NANOSECONDS));
 				return ResponseEntity.ok().headers(headers).body(responseDto);
 			}
 
