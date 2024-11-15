@@ -181,6 +181,7 @@ public class PacketValidateProcessor {
 		PacketValidationDto packetValidationDto = new PacketValidationDto();
 		String registrationId = null;
 		InternalRegistrationStatusDto registrationStatusDto = new InternalRegistrationStatusDto();
+		long startTime = System.currentTimeMillis();
 		try {
 			registrationStatusDto
 					.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PRINT_SERVICE.toString());
@@ -200,9 +201,12 @@ public class PacketValidateProcessor {
 			registrationStatusDto.setRegistrationStageName(stageName);
 			boolean isValidSupervisorStatus = isValidSupervisorStatus(object);
 			if (isValidSupervisorStatus) {
+				long validateStartTime = System.currentTimeMillis();
 				Boolean isValid = compositePacketValidator.validate(object.getRid(),
 						registrationStatusDto.getRegistrationType(), packetValidationDto);
-
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(),
+						LoggerFileConstant.REGISTRATIONID.toString(), "PacketValidatorStage",
+						"Time taken to validate the rid - " + object.getRid() + " - " + (System.currentTimeMillis() - validateStartTime) + " (ms)");
 				if (isValid) {
 					// save audit details
 					InternalRegistrationStatusDto finalRegistrationStatusDto = registrationStatusDto;
@@ -458,6 +462,9 @@ public class PacketValidateProcessor {
 
 			auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
 					moduleId, moduleName, registrationId);
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(),
+					LoggerFileConstant.REGISTRATIONID.toString(), "PacketValidatorStage",
+					"Time taken to complete overall steps - " + object.getRid() + " - " + (System.currentTimeMillis() - startTime) + " (ms)");
 		}
 
 		return object;
