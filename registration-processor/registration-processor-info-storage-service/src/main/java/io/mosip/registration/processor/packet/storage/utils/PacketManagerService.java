@@ -156,7 +156,11 @@ public class PacketManagerService extends PriorityBasedPacketManagerService {
         request.setVersion(VERSION);
         request.setRequesttime(DateUtils.getUTCCurrentDateTime());
         request.setRequest(fieldDto);
+        long startTime = System.currentTimeMillis();
         ResponseWrapper<ValidatePacketResponse> response = (ResponseWrapper) restApi.postApi(ApiName.PACKETMANAGER_VALIDATE, "", "", request, ResponseWrapper.class);
+        regProcLogger.info(LoggerFileConstant.SESSIONID.toString(),
+                LoggerFileConstant.REGISTRATIONID.toString(), "PacketValidatorStage",
+                "Time taken for PacketManagerService.validate validate API for rid - " + id + " - " + (System.currentTimeMillis() - startTime) + " (ms)");
 
         if (response.getErrors() != null && response.getErrors().size() > 0) {
             regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), id, JsonUtils.javaObjectToJsonString(response));
@@ -253,6 +257,7 @@ public class PacketManagerService extends PriorityBasedPacketManagerService {
     }
 
     protected InfoResponseDto info(String id) throws ApisResourceAccessException, PacketManagerException, JsonProcessingException, IOException {
+        long startTime = System.currentTimeMillis();
         InfoRequestDto infoRequestDto = new InfoRequestDto(id);
 
         RequestWrapper<InfoRequestDto> request = new RequestWrapper<>();
@@ -261,6 +266,9 @@ public class PacketManagerService extends PriorityBasedPacketManagerService {
         request.setRequesttime(DateUtils.getUTCCurrentDateTime());
         request.setRequest(infoRequestDto);
         ResponseWrapper<InfoResponseDto> response = (ResponseWrapper) restApi.postApi(ApiName.PACKETMANAGER_INFO, "", "", request, ResponseWrapper.class);
+        regProcLogger.info(LoggerFileConstant.SESSIONID.toString(),
+                LoggerFileConstant.REGISTRATIONID.toString(), "PacketValidatorStage",
+                "Time taken for PacketManagerService.info for rid - " + id + " - " + (System.currentTimeMillis() - startTime) + " (ms)");
 
         if (response.getErrors() != null && response.getErrors().size() > 0) {
             regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), id, JsonUtils.javaObjectToJsonString(response));

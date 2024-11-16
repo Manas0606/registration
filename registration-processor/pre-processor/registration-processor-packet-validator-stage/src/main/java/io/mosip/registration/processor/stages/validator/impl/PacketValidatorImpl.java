@@ -81,6 +81,7 @@ public class PacketValidatorImpl implements PacketValidator {
 			throws ApisResourceAccessException, RegistrationProcessorCheckedException, IOException,
 			JsonProcessingException, PacketManagerException {
 		String uin = null;
+		long validateStartTime = System.currentTimeMillis();
 		try {
 			ValidatePacketResponse response = packetManagerService.validate(id, process,
 					ProviderStageName.PACKET_VALIDATOR);
@@ -175,6 +176,9 @@ public class PacketValidatorImpl implements PacketValidator {
 		}
 
 		packetValidationDto.setValid(true);
+		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(),
+				LoggerFileConstant.REGISTRATIONID.toString(), "PacketValidatorStage",
+				"Time taken for PacketValidatorImpl.validate for rid - " + id + " - " + (System.currentTimeMillis() - validateStartTime) + " (ms)");
 		return packetValidationDto.isValid();
 	}
 

@@ -206,7 +206,7 @@ public class PacketValidateProcessor {
 						registrationStatusDto.getRegistrationType(), packetValidationDto);
 				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(),
 						LoggerFileConstant.REGISTRATIONID.toString(), "PacketValidatorStage",
-						"Time taken to validate the rid - " + object.getRid() + " - " + (System.currentTimeMillis() - validateStartTime) + " (ms)");
+						"Time taken to complete validation for rid - " + object.getRid() + " - " + (System.currentTimeMillis() - validateStartTime) + " (ms)");
 				if (isValid) {
 					// save audit details
 					InternalRegistrationStatusDto finalRegistrationStatusDto = registrationStatusDto;
