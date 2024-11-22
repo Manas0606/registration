@@ -2,9 +2,13 @@ package io.mosip.registration.processor.stages.utils;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.mosip.kernel.core.logger.spi.Logger;
+import io.mosip.registration.processor.core.constant.LoggerFileConstant;
+import io.mosip.registration.processor.core.logger.RegProcessorLogger;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,6 +28,8 @@ import io.mosip.kernel.cbeffutil.container.impl.CbeffContainerImpl;
 @Component
 public class BiometricsXSDValidator {
 
+    private static Logger regProcLogger = RegProcessorLogger.getLogger(BiometricsXSDValidator.class);
+
     @Value("${mosip.kernel.xsdstorage-uri}")
     private String configServerFileStorageURL;
     
@@ -35,6 +41,8 @@ public class BiometricsXSDValidator {
     public void validateXSD(BiometricRecord biometricRecord ) throws Exception  {
         if(xsd == null) {
             xsd = new URL(configServerFileStorageURL + schemaFileName).openStream();
+            regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(),
+                    LoggerFileConstant.REGISTRATIONID.toString(), "XSD Value is", (new String(xsd.readAllBytes(), StandardCharsets.UTF_8)));
         }
 
         CbeffContainerImpl cbeffContainer = new CbeffContainerImpl();
