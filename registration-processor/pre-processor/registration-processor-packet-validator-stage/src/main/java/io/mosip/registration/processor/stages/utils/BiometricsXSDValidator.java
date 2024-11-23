@@ -47,7 +47,7 @@ public class BiometricsXSDValidator {
             }
         }
         regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(),
-                LoggerFileConstant.REGISTRATIONID.toString(), "XSD Value Present", (xsd == null ? false : true));
+                LoggerFileConstant.REGISTRATIONID.toString(), "XSD Value Present", (xsd == null ? "false" : "true"));
         CbeffContainerImpl cbeffContainer = new CbeffContainerImpl();
         BIR bir = cbeffContainer.createBIRType(biometricRecord.getSegments());
         CbeffValidator.createXMLBytes(bir, xsd);//validates XSD
