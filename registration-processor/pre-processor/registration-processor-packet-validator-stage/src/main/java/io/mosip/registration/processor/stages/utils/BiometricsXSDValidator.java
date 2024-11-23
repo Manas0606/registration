@@ -36,18 +36,18 @@ public class BiometricsXSDValidator {
     @Value("${mosip.kernel.xsdfile}")
     private String schemaFileName;
 
-    private InputStream xsd = null;
+    private byte[] xsd = null;
     
     public void validateXSD(BiometricRecord biometricRecord ) throws Exception  {
-        if(xsd == null) {
-            xsd = new URL(configServerFileStorageURL + schemaFileName).openStream();
-            regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(),
-                    LoggerFileConstant.REGISTRATIONID.toString(), "XSD Value is", (new String(xsd.readAllBytes(), StandardCharsets.UTF_8)));
+        if(xsd==null) {
+            try (InputStream inputStream = new URL(configServerFileStorageURL + schemaFileName).openStream()) {
+                xsd =  IOUtils.toByteArray(inputStream);
+            }
         }
 
         CbeffContainerImpl cbeffContainer = new CbeffContainerImpl();
         BIR bir = cbeffContainer.createBIRType(biometricRecord.getSegments());
-        CbeffValidator.createXMLBytes(bir, IOUtils.toByteArray(xsd));//validates XSD
+        CbeffValidator.createXMLBytes(bir, xsd);//validates XSD
     }
 
 	
