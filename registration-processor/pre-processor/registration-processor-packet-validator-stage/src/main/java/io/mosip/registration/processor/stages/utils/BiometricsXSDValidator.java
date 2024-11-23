@@ -42,9 +42,12 @@ public class BiometricsXSDValidator {
         if(xsd==null) {
             try (InputStream inputStream = new URL(configServerFileStorageURL + schemaFileName).openStream()) {
                 xsd =  IOUtils.toByteArray(inputStream);
+                regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(),
+                        LoggerFileConstant.REGISTRATIONID.toString(), "XSD Value is", (new String(xsd, StandardCharsets.UTF_8)));
             }
         }
-
+        regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(),
+                LoggerFileConstant.REGISTRATIONID.toString(), "XSD Value Present", (xsd == null ? false : true));
         CbeffContainerImpl cbeffContainer = new CbeffContainerImpl();
         BIR bir = cbeffContainer.createBIRType(biometricRecord.getSegments());
         CbeffValidator.createXMLBytes(bir, xsd);//validates XSD
