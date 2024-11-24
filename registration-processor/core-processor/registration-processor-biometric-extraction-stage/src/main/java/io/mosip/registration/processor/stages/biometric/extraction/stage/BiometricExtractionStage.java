@@ -166,175 +166,180 @@ public class BiometricExtractionStage extends MosipVerticleAPIManager{
 		InternalRegistrationStatusDto registrationStatusDto=null;
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 				registrationId, "BiometricExtractionStage::process()::entry");
-		try {
-		 registrationStatusDto = registrationStatusService.getRegistrationStatus(
-				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
-		registrationStatusDto
-			.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.BIOMETRIC_EXTRACTION.toString());
-		registrationStatusDto.setRegistrationStageName(getStageName());
-		
-		
-			if(!idrepoDraftService.idrepoHasDraft(registrationStatusDto.getRegistrationId())) {
-				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
-				registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
-						.getStatusCode(RegistrationExceptionTypeCode.DRAFT_REQUEST_UNAVAILABLE));
-				description.setTransactionStatusCode(registrationStatusMapperUtil
-						.getStatusCode(RegistrationExceptionTypeCode.DRAFT_REQUEST_UNAVAILABLE));
-				registrationStatusDto.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getCode());
-				registrationStatusDto.setStatusComment(trimExceptionMessage
-						.trimExceptionMessage(StatusUtil.BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getMessage()));
-				object.setInternalError(Boolean.TRUE);
-				isTransactionSuccessful = false;
-				description.setMessage(PlatformErrorMessages.RPR_BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getMessage());
-				description.setCode(PlatformErrorMessages.RPR_BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getCode());
-				description.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getCode());
+		registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
+				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.BIOMETRIC_EXTRACTION);
 
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-						LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
-						StatusUtil.BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getMessage());
-			}
-			else {
-				ExtractorsDto extractorsDto=getExtractors(registrationStatusDto.getRegistrationId());
-				if(extractorsDto.getExtractors()!=null && !extractorsDto.getExtractors().isEmpty()) {
-				for(ExtractorDto dto:extractorsDto.getExtractors()) {
-					addBiometricExtractiontoIdRepository(dto,registrationStatusDto.getRegistrationId());	
-				}
+		if(registrationStatusDto != null) {
+			try {
+				registrationStatusDto
+						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.BIOMETRIC_EXTRACTION.toString());
+				registrationStatusDto.setRegistrationStageName(getStageName());
+
+
+				if(!idrepoDraftService.idrepoHasDraft(registrationStatusDto.getRegistrationId())) {
+					registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
+					registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
+							.getStatusCode(RegistrationExceptionTypeCode.DRAFT_REQUEST_UNAVAILABLE));
+					description.setTransactionStatusCode(registrationStatusMapperUtil
+							.getStatusCode(RegistrationExceptionTypeCode.DRAFT_REQUEST_UNAVAILABLE));
+					registrationStatusDto.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getCode());
+					registrationStatusDto.setStatusComment(trimExceptionMessage
+							.trimExceptionMessage(StatusUtil.BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getMessage()));
+					object.setInternalError(Boolean.TRUE);
+					isTransactionSuccessful = false;
+					description.setMessage(PlatformErrorMessages.RPR_BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getMessage());
+					description.setCode(PlatformErrorMessages.RPR_BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getCode());
+					description.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getCode());
+
+					regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+							LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
+							StatusUtil.BIOMETRIC_EXTRACTION_DRAFT_REQUEST_UNAVAILABLE.getMessage());
 				}
 				else {
-					throw new RegistrationProcessorCheckedException(PlatformErrorMessages.RPR_PMS_BIOMETRIC_EXTRACTION_NULL_RESPONSE.getCode(),
-							PlatformErrorMessages.RPR_PMS_BIOMETRIC_EXTRACTION_NULL_RESPONSE.getMessage());
+					ExtractorsDto extractorsDto=getExtractors(registrationStatusDto.getRegistrationId());
+					if(extractorsDto.getExtractors()!=null && !extractorsDto.getExtractors().isEmpty()) {
+						for(ExtractorDto dto:extractorsDto.getExtractors()) {
+							addBiometricExtractiontoIdRepository(dto,registrationStatusDto.getRegistrationId());
+						}
+					}
+					else {
+						throw new RegistrationProcessorCheckedException(PlatformErrorMessages.RPR_PMS_BIOMETRIC_EXTRACTION_NULL_RESPONSE.getCode(),
+								PlatformErrorMessages.RPR_PMS_BIOMETRIC_EXTRACTION_NULL_RESPONSE.getMessage());
+					}
+					registrationStatusDto.setStatusComment(StatusUtil.BIOMETRIC_EXTRACTION_SUCCESS.getMessage());
+					registrationStatusDto.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_SUCCESS.getCode());
+					isTransactionSuccessful = true;
+					object.setIsValid(Boolean.TRUE);
+					registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.toString());
+					description.setMessage(PlatformSuccessMessages.RPR_BIOMETRIC_EXTRACTION_SUCCESS.getMessage());
+					description.setCode(PlatformSuccessMessages.RPR_BIOMETRIC_EXTRACTION_SUCCESS.getCode());
+					description.setTransactionStatusCode(RegistrationTransactionStatusCode.SUCCESS.toString());
 				}
-				registrationStatusDto.setStatusComment(StatusUtil.BIOMETRIC_EXTRACTION_SUCCESS.getMessage());
-				registrationStatusDto.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_SUCCESS.getCode());
-				isTransactionSuccessful = true;
-				object.setIsValid(Boolean.TRUE);
-				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.toString());
-				description.setMessage(PlatformSuccessMessages.RPR_BIOMETRIC_EXTRACTION_SUCCESS.getMessage());
-				description.setCode(PlatformSuccessMessages.RPR_BIOMETRIC_EXTRACTION_SUCCESS.getCode());
-				description.setTransactionStatusCode(RegistrationTransactionStatusCode.SUCCESS.toString());
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, description.getMessage());
+				registrationStatusDto.setUpdatedBy(USER);
+			} catch (ApisResourceAccessException ex) {
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
+				registrationStatusDto.setStatusComment(trimExceptionMessage
+						.trimExceptionMessage(StatusUtil.API_RESOUCE_ACCESS_FAILED.getMessage() + ex.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.API_RESOUCE_ACCESS_FAILED.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
+						.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION));
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId,
+						RegistrationStatusCode.PROCESSING.toString() + ex.getMessage() + ExceptionUtils.getStackTrace(ex));
+				object.setInternalError(Boolean.TRUE);
+				description.setMessage(trimExceptionMessage
+						.trimExceptionMessage(StatusUtil.API_RESOUCE_ACCESS_FAILED.getMessage() + ex.getMessage()));
+				description.setCode(PlatformErrorMessages.RPR_BIOMETRIC_EXTRACTION_API_RESOURCE_EXCEPTION.getCode());
+			} catch (JSONException | JsonProcessingException e) {
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId,
+						RegistrationStatusCode.FAILED.toString() + e.getMessage() + ExceptionUtils.getStackTrace(e));
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
+				registrationStatusDto.setStatusComment(
+						trimExceptionMessage.trimExceptionMessage(StatusUtil.JSON_PARSING_EXCEPTION.getMessage() + e.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.JSON_PARSING_EXCEPTION.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(
+						registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.JSON_PROCESSING_EXCEPTION));
+				isTransactionSuccessful = false;
+				description.setMessage(PlatformErrorMessages.RPR_SYS_JSON_PARSING_EXCEPTION.getMessage());
+				description.setCode(PlatformErrorMessages.RPR_SYS_JSON_PARSING_EXCEPTION.getCode());
+				object.setInternalError(Boolean.TRUE);
+				object.setRid(registrationStatusDto.getRegistrationId());
+			}catch (RegistrationProcessorCheckedException e) {
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
+				registrationStatusDto.setStatusComment(
+						trimExceptionMessage.trimExceptionMessage(StatusUtil.BASE_CHECKED_EXCEPTION.getMessage() + e.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.BASE_CHECKED_EXCEPTION.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(
+						registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.BASE_CHECKED_EXCEPTION));
+				description.setMessage(e.getMessage());
+				description.setCode(e.getErrorCode());
+				object.setInternalError(Boolean.TRUE);
+				object.setRid(registrationStatusDto.getRegistrationId());
+				isTransactionSuccessful = false;
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						description.getCode() + " -- " + registrationId,
+						e.getErrorCode() + e.getMessage()
+								+ ExceptionUtils.getStackTrace(e));
+			}catch (IdrepoDraftException e) {
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId,
+						RegistrationStatusCode.FAILED.toString() + e.getMessage() + ExceptionUtils.getStackTrace(e));
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
+				registrationStatusDto.setStatusComment(
+						trimExceptionMessage.trimExceptionMessage(
+								StatusUtil.BIOMETRIC_EXTRACTION_IDREPO_DRAFT_EXCEPTION.getMessage() + e.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_IDREPO_DRAFT_EXCEPTION.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(
+						registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.IDREPO_DRAFT_EXCEPTION));
+				description.setMessage(PlatformErrorMessages.IDREPO_DRAFT_EXCEPTION.getMessage());
+				description.setCode(PlatformErrorMessages.IDREPO_DRAFT_EXCEPTION.getCode());
+				object.setInternalError(Boolean.TRUE);
+				object.setRid(registrationStatusDto.getRegistrationId());
+			} catch (IdrepoDraftReprocessableException e) {
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId,
+						RegistrationStatusCode.PROCESSING.toString() + e.getMessage() + ExceptionUtils.getStackTrace(e));
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
+				registrationStatusDto.setStatusComment(trimExceptionMessage.trimExceptionMessage(
+						StatusUtil.BIOMETRIC_EXTRACTION_IDREPO_DRAFT_REPROCESSABLE_EXCEPTION.getMessage()
+								+ e.getMessage()));
+				registrationStatusDto
+						.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_IDREPO_DRAFT_REPROCESSABLE_EXCEPTION.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
+						.getStatusCode(RegistrationExceptionTypeCode.IDREPO_DRAFT_REPROCESSABLE_EXCEPTION));
+				description.setMessage(PlatformErrorMessages.IDREPO_DRAFT_EXCEPTION.getMessage());
+				description.setCode(PlatformErrorMessages.IDREPO_DRAFT_EXCEPTION.getCode());
+				object.setInternalError(Boolean.TRUE);
+				object.setRid(registrationStatusDto.getRegistrationId());
+			}catch (Exception ex) {
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
+				registrationStatusDto.setStatusComment(
+						trimExceptionMessage.trimExceptionMessage(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(
+						registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.BIOMETRIC_EXTRACTION_FAILED));
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId,
+						RegistrationStatusCode.FAILED.toString() + ex.getMessage() + ExceptionUtils.getStackTrace(ex));
+				object.setInternalError(Boolean.TRUE);
+				description.setMessage(PlatformErrorMessages.RPR_BDD_UNKNOWN_EXCEPTION.getMessage());
+				description.setCode(PlatformErrorMessages.RPR_BDD_UNKNOWN_EXCEPTION.getCode());
 			}
-			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId, description.getMessage());
-			registrationStatusDto.setUpdatedBy(USER);
-		} catch (ApisResourceAccessException ex) {
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
-			registrationStatusDto.setStatusComment(trimExceptionMessage
-					.trimExceptionMessage(StatusUtil.API_RESOUCE_ACCESS_FAILED.getMessage() + ex.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.API_RESOUCE_ACCESS_FAILED.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
-					.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION));
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId,
-					RegistrationStatusCode.PROCESSING.toString() + ex.getMessage() + ExceptionUtils.getStackTrace(ex));
-			object.setInternalError(Boolean.TRUE);
-			description.setMessage(trimExceptionMessage
-					.trimExceptionMessage(StatusUtil.API_RESOUCE_ACCESS_FAILED.getMessage() + ex.getMessage()));
-			description.setCode(PlatformErrorMessages.RPR_BIOMETRIC_EXTRACTION_API_RESOURCE_EXCEPTION.getCode());
-		} catch (JSONException | JsonProcessingException e) {
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId,
-					RegistrationStatusCode.FAILED.toString() + e.getMessage() + ExceptionUtils.getStackTrace(e));
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
-			registrationStatusDto.setStatusComment(
-					trimExceptionMessage.trimExceptionMessage(StatusUtil.JSON_PARSING_EXCEPTION.getMessage() + e.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.JSON_PARSING_EXCEPTION.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(
-					registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.JSON_PROCESSING_EXCEPTION));
-			isTransactionSuccessful = false;
-			description.setMessage(PlatformErrorMessages.RPR_SYS_JSON_PARSING_EXCEPTION.getMessage());
-			description.setCode(PlatformErrorMessages.RPR_SYS_JSON_PARSING_EXCEPTION.getCode());
-			object.setInternalError(Boolean.TRUE);
-			object.setRid(registrationStatusDto.getRegistrationId());
-		}catch (RegistrationProcessorCheckedException e) {
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
-			registrationStatusDto.setStatusComment(
-					trimExceptionMessage.trimExceptionMessage(StatusUtil.BASE_CHECKED_EXCEPTION.getMessage() + e.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.BASE_CHECKED_EXCEPTION.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(
-					registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.BASE_CHECKED_EXCEPTION));
-			description.setMessage(e.getMessage());
-			description.setCode(e.getErrorCode());
-			object.setInternalError(Boolean.TRUE);
-			object.setRid(registrationStatusDto.getRegistrationId());
-			isTransactionSuccessful = false;
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					description.getCode() + " -- " + registrationId,
-					e.getErrorCode() + e.getMessage()
-							+ ExceptionUtils.getStackTrace(e));
-		}catch (IdrepoDraftException e) {
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId,
-					RegistrationStatusCode.FAILED.toString() + e.getMessage() + ExceptionUtils.getStackTrace(e));
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
-			registrationStatusDto.setStatusComment(
-					trimExceptionMessage.trimExceptionMessage(
-							StatusUtil.BIOMETRIC_EXTRACTION_IDREPO_DRAFT_EXCEPTION.getMessage() + e.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_IDREPO_DRAFT_EXCEPTION.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(
-					registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.IDREPO_DRAFT_EXCEPTION));
-			description.setMessage(PlatformErrorMessages.IDREPO_DRAFT_EXCEPTION.getMessage());
-			description.setCode(PlatformErrorMessages.IDREPO_DRAFT_EXCEPTION.getCode());
-			object.setInternalError(Boolean.TRUE);
-			object.setRid(registrationStatusDto.getRegistrationId());
-		} catch (IdrepoDraftReprocessableException e) {
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId,
-					RegistrationStatusCode.PROCESSING.toString() + e.getMessage() + ExceptionUtils.getStackTrace(e));
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
-			registrationStatusDto.setStatusComment(trimExceptionMessage.trimExceptionMessage(
-					StatusUtil.BIOMETRIC_EXTRACTION_IDREPO_DRAFT_REPROCESSABLE_EXCEPTION.getMessage()
-							+ e.getMessage()));
-			registrationStatusDto
-					.setSubStatusCode(StatusUtil.BIOMETRIC_EXTRACTION_IDREPO_DRAFT_REPROCESSABLE_EXCEPTION.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
-					.getStatusCode(RegistrationExceptionTypeCode.IDREPO_DRAFT_REPROCESSABLE_EXCEPTION));
-			description.setMessage(PlatformErrorMessages.IDREPO_DRAFT_EXCEPTION.getMessage());
-			description.setCode(PlatformErrorMessages.IDREPO_DRAFT_EXCEPTION.getCode());
-			object.setInternalError(Boolean.TRUE);
-			object.setRid(registrationStatusDto.getRegistrationId());
-		}catch (Exception ex) {
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
-			registrationStatusDto.setStatusComment(
-					trimExceptionMessage.trimExceptionMessage(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(
-					registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.BIOMETRIC_EXTRACTION_FAILED));
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId,
-					RegistrationStatusCode.FAILED.toString() + ex.getMessage() + ExceptionUtils.getStackTrace(ex));
-			object.setInternalError(Boolean.TRUE);
-			description.setMessage(PlatformErrorMessages.RPR_BDD_UNKNOWN_EXCEPTION.getMessage());
-			description.setCode(PlatformErrorMessages.RPR_BDD_UNKNOWN_EXCEPTION.getCode());
-		}
-		finally {
-			if (description.getStatusComment() != null)
-				registrationStatusDto.setStatusComment(description.getStatusComment());
-			if (description.getStatusCode() != null)
-				registrationStatusDto.setStatusCode(description.getStatusCode());
-			if (description.getSubStatusCode() != null)
-				registrationStatusDto.setSubStatusCode(description.getSubStatusCode());
-			if (description.getTransactionStatusCode() != null)
-				registrationStatusDto.setLatestTransactionStatusCode(description.getTransactionStatusCode());
+			finally {
+				if (description.getStatusComment() != null)
+					registrationStatusDto.setStatusComment(description.getStatusComment());
+				if (description.getStatusCode() != null)
+					registrationStatusDto.setStatusCode(description.getStatusCode());
+				if (description.getSubStatusCode() != null)
+					registrationStatusDto.setSubStatusCode(description.getSubStatusCode());
+				if (description.getTransactionStatusCode() != null)
+					registrationStatusDto.setLatestTransactionStatusCode(description.getTransactionStatusCode());
 
-			if (object.getInternalError()) {
-				updateErrorFlags(registrationStatusDto, object);
+				if (object.getInternalError()) {
+					updateErrorFlags(registrationStatusDto, object);
+				}
+				String moduleId = isTransactionSuccessful
+						? PlatformSuccessMessages.RPR_BIOMETRIC_EXTRACTION_SUCCESS.getCode()
+						: description.getCode();
+				String moduleName = ModuleName.BIOMETRIC_EXTRACTION.toString();
+				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
+				String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
+				String eventName = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventName.UPDATE.toString()
+						: EventName.EXCEPTION.toString();
+				String eventType = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventType.BUSINESS.toString()
+						: EventType.SYSTEM.toString();
+
+				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
+						moduleId, moduleName, registrationId);
+
 			}
-			String moduleId = isTransactionSuccessful
-					? PlatformSuccessMessages.RPR_BIOMETRIC_EXTRACTION_SUCCESS.getCode()
-					: description.getCode();
-			String moduleName = ModuleName.BIOMETRIC_EXTRACTION.toString();
-			registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
-			String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
-			String eventName = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventName.UPDATE.toString()
-					: EventName.EXCEPTION.toString();
-			String eventType = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventType.BUSINESS.toString()
-					: EventType.SYSTEM.toString();
-
-			auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
-					moduleId, moduleName, registrationId);
-
+		} else {
+			object.setSkipEvent(true);
 		}
-		
+
 		return object;
 	}
 

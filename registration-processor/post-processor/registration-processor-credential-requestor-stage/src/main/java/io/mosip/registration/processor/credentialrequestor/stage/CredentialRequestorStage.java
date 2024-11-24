@@ -190,159 +190,164 @@ public class CredentialRequestorStage extends MosipVerticleAPIManager {
 		RequestWrapper<CredentialRequestDto> requestWrapper = new RequestWrapper<>();
 		ResponseWrapper<?> responseWrapper = null;
 		CredentialResponseDto credentialResponseDto;
-		try {
-			registrationStatusDto = registrationStatusService.getRegistrationStatus(
-					regId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
-			registrationStatusDto
-					.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PRINT_SERVICE.toString());
-			registrationStatusDto.setRegistrationStageName(getStageName());
-			JSONObject jsonObject = utilities.idrepoRetrieveIdentityByRid(regId);
-			uin = JsonUtil.getJSONValue(jsonObject, IdType.UIN.toString());
-			if (uin == null) {
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-						LoggerFileConstant.REGISTRATIONID.toString(), null,
-						PlatformErrorMessages.RPR_PRT_UIN_NOT_FOUND_IN_DATABASE.name());
-				object.setIsValid(Boolean.FALSE);
-				isTransactionSuccessful = false;
-				description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
-				description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
+		registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
+				regId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.PRINT_SERVICE);
 
-				registrationStatusDto.setStatusComment(
-						StatusUtil.UIN_NOT_FOUND_IN_DATABASE.getMessage());
-				registrationStatusDto.setSubStatusCode(StatusUtil.UIN_NOT_FOUND_IN_DATABASE.getCode());
-				registrationStatusDto
-						.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.FAILED.toString());
+		if(registrationStatusDto != null) {
+			try {
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PRINT_SERVICE.toString());
+				registrationStatusDto.setRegistrationStageName(getStageName());
+				JSONObject jsonObject = utilities.idrepoRetrieveIdentityByRid(regId);
+				uin = JsonUtil.getJSONValue(jsonObject, IdType.UIN.toString());
+				if (uin == null) {
+					regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+							LoggerFileConstant.REGISTRATIONID.toString(), null,
+							PlatformErrorMessages.RPR_PRT_UIN_NOT_FOUND_IN_DATABASE.name());
+					object.setIsValid(Boolean.FALSE);
+					isTransactionSuccessful = false;
+					description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
+					description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
 
-			} else {
-				requestWrapper.setId(env.getProperty("mosip.registration.processor.credential.request.service.id"));
-				DateTimeFormatter format = DateTimeFormatter.ofPattern(env.getProperty(DATETIME_PATTERN));
-				requestWrapper.setVersion("1.0");
-				List<CredentialPartner> allIssuerList = credentialPartnerUtil.getAllCredentialPartners().getPartners();
-				// filtering with default partner ids and process
-				List<CredentialPartner> filteredPartners = allIssuerList.stream()
-						.filter(issuer -> defaultPartners.contains(issuer.getId()))
-						.filter(issuer -> (issuer.getProcess() == null) || (issuer.getProcess().contains(object.getReg_type())))
-						.collect(Collectors.toList());
-				filteredPartners.addAll(credentialPartnerUtil.getCredentialPartners(
-						regId, registrationStatusDto.getRegistrationType(), jsonObject));
-				for (CredentialPartner key : filteredPartners) {
-					CredentialRequestDto credentialRequestDto = getCredentialRequestDto(regId, registrationStatusDto.getRegistrationType(), key);
-					LocalDateTime localdatetime = LocalDateTime.parse(
-							DateUtils.getUTCCurrentDateTimeString(env.getProperty(DATETIME_PATTERN)), format);
-					requestWrapper.setRequesttime(localdatetime);
-					requestWrapper.setRequest(credentialRequestDto);
-					// issuers with appIdBasedCredentialIdSuffix is calling v1 api and for others stage is calling v2 api for credential
-					if (StringUtils.isNotEmpty(key.getAppIdBasedCredentialIdSuffix())) {
-						List<String> pathsegments = new ArrayList<>();
-						pathsegments.add(regId + key.getAppIdBasedCredentialIdSuffix()); //  #PDF suffix is added to identify the requested credential via rid
-						responseWrapper = (ResponseWrapper<?>) restClientService.postApi(ApiName.CREDENTIALREQUESTV2, MediaType.APPLICATION_JSON, pathsegments, null,
-									null, requestWrapper, ResponseWrapper.class);
-					} else {
-						responseWrapper = (ResponseWrapper<?>) restClientService.postApi(ApiName.CREDENTIALREQUEST, null, null,
-								requestWrapper, ResponseWrapper.class, MediaType.APPLICATION_JSON);
-					}
-					if (responseWrapper.getErrors() != null && !responseWrapper.getErrors().isEmpty()) {
-						ErrorDTO error = responseWrapper.getErrors().get(0);
-						object.setIsValid(Boolean.FALSE);
-						isTransactionSuccessful = false;
-						registrationStatusDto.setRefId(refIds);
-						description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
-						description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
-
-						registrationStatusDto.setStatusComment(
-								StatusUtil.PRINT_REQUEST_FAILED.getMessage() + SEPERATOR + error.getMessage());
-						registrationStatusDto.setSubStatusCode(StatusUtil.PRINT_REQUEST_FAILED.getCode());
-						registrationStatusDto
-								.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.REPROCESS.toString());
-						registrationStatusDto
-								.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PRINT_SERVICE.toString());
-						break;
-					} else {
-						credentialResponseDto = mapper.readValue(mapper.writeValueAsString(responseWrapper.getResponse()),
-								CredentialResponseDto.class);
-						refIds = credentialResponseDto.getRequestId();
-						isTransactionSuccessful = true;
-					}
-				}
-				if (isTransactionSuccessful) {
-					registrationStatusDto.setRefId(refIds);
-					object.setIsValid(Boolean.TRUE);
-					description.setMessage(PlatformSuccessMessages.RPR_PRINT_STAGE_REQUEST_SUCCESS.getMessage());
-					description.setCode(PlatformSuccessMessages.RPR_PRINT_STAGE_REQUEST_SUCCESS.getCode());
 					registrationStatusDto.setStatusComment(
-							trimeExpMessage.trimExceptionMessage(StatusUtil.PRINT_REQUEST_SUCCESS.getMessage()));
-					registrationStatusDto.setSubStatusCode(StatusUtil.PRINT_REQUEST_SUCCESS.getCode());
+							StatusUtil.UIN_NOT_FOUND_IN_DATABASE.getMessage());
+					registrationStatusDto.setSubStatusCode(StatusUtil.UIN_NOT_FOUND_IN_DATABASE.getCode());
 					registrationStatusDto
-							.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.PROCESSED.toString());
+							.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.FAILED.toString());
 					registrationStatusDto
 							.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PRINT_SERVICE.toString());
 
-					regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(),
-							LoggerFileConstant.REGISTRATIONID.toString(), regId, "PrintStage::process()::exit");
+				} else {
+					requestWrapper.setId(env.getProperty("mosip.registration.processor.credential.request.service.id"));
+					DateTimeFormatter format = DateTimeFormatter.ofPattern(env.getProperty(DATETIME_PATTERN));
+					requestWrapper.setVersion("1.0");
+					List<CredentialPartner> allIssuerList = credentialPartnerUtil.getAllCredentialPartners().getPartners();
+					// filtering with default partner ids and process
+					List<CredentialPartner> filteredPartners = allIssuerList.stream()
+							.filter(issuer -> defaultPartners.contains(issuer.getId()))
+							.filter(issuer -> (issuer.getProcess() == null) || (issuer.getProcess().contains(object.getReg_type())))
+							.collect(Collectors.toList());
+					filteredPartners.addAll(credentialPartnerUtil.getCredentialPartners(
+							regId, registrationStatusDto.getRegistrationType(), jsonObject));
+					for (CredentialPartner key : filteredPartners) {
+						CredentialRequestDto credentialRequestDto = getCredentialRequestDto(regId, registrationStatusDto.getRegistrationType(), key);
+						LocalDateTime localdatetime = LocalDateTime.parse(
+								DateUtils.getUTCCurrentDateTimeString(env.getProperty(DATETIME_PATTERN)), format);
+						requestWrapper.setRequesttime(localdatetime);
+						requestWrapper.setRequest(credentialRequestDto);
+						// issuers with appIdBasedCredentialIdSuffix is calling v1 api and for others stage is calling v2 api for credential
+						if (StringUtils.isNotEmpty(key.getAppIdBasedCredentialIdSuffix())) {
+							List<String> pathsegments = new ArrayList<>();
+							pathsegments.add(regId + key.getAppIdBasedCredentialIdSuffix()); //  #PDF suffix is added to identify the requested credential via rid
+							responseWrapper = (ResponseWrapper<?>) restClientService.postApi(ApiName.CREDENTIALREQUESTV2, MediaType.APPLICATION_JSON, pathsegments, null,
+									null, requestWrapper, ResponseWrapper.class);
+						} else {
+							responseWrapper = (ResponseWrapper<?>) restClientService.postApi(ApiName.CREDENTIALREQUEST, null, null,
+									requestWrapper, ResponseWrapper.class, MediaType.APPLICATION_JSON);
+						}
+						if (responseWrapper.getErrors() != null && !responseWrapper.getErrors().isEmpty()) {
+							ErrorDTO error = responseWrapper.getErrors().get(0);
+							object.setIsValid(Boolean.FALSE);
+							isTransactionSuccessful = false;
+							registrationStatusDto.setRefId(refIds);
+							description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
+							description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
+
+							registrationStatusDto.setStatusComment(
+									StatusUtil.PRINT_REQUEST_FAILED.getMessage() + SEPERATOR + error.getMessage());
+							registrationStatusDto.setSubStatusCode(StatusUtil.PRINT_REQUEST_FAILED.getCode());
+							registrationStatusDto
+									.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.REPROCESS.toString());
+							registrationStatusDto
+									.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PRINT_SERVICE.toString());
+							break;
+						} else {
+							credentialResponseDto = mapper.readValue(mapper.writeValueAsString(responseWrapper.getResponse()),
+									CredentialResponseDto.class);
+							refIds = credentialResponseDto.getRequestId();
+							isTransactionSuccessful = true;
+						}
+					}
+					if (isTransactionSuccessful) {
+						registrationStatusDto.setRefId(refIds);
+						object.setIsValid(Boolean.TRUE);
+						description.setMessage(PlatformSuccessMessages.RPR_PRINT_STAGE_REQUEST_SUCCESS.getMessage());
+						description.setCode(PlatformSuccessMessages.RPR_PRINT_STAGE_REQUEST_SUCCESS.getCode());
+						registrationStatusDto.setStatusComment(
+								trimeExpMessage.trimExceptionMessage(StatusUtil.PRINT_REQUEST_SUCCESS.getMessage()));
+						registrationStatusDto.setSubStatusCode(StatusUtil.PRINT_REQUEST_SUCCESS.getCode());
+						registrationStatusDto
+								.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.PROCESSED.toString());
+						registrationStatusDto
+								.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PRINT_SERVICE.toString());
+
+						regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(),
+								LoggerFileConstant.REGISTRATIONID.toString(), regId, "PrintStage::process()::exit");
+					}
 				}
+			} catch (ApisResourceAccessException e) {
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						regId, PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.name() + e.getMessage()
+								+ ExceptionUtils.getStackTrace(e));
+				registrationStatusDto
+						.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.REPROCESS.toString());
+				registrationStatusDto.setStatusComment(trimeExpMessage.trimExceptionMessage(
+						StatusUtil.API_RESOUCE_ACCESS_FAILED.getMessage() + SEPERATOR + e.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.API_RESOUCE_ACCESS_FAILED.getCode());
+				description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
+				description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
+				object.setInternalError(Boolean.TRUE);
+			} catch (IOException e) {
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						regId, PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.name() + e.getMessage()
+								+ ExceptionUtils.getStackTrace(e));
+				registrationStatusDto
+						.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.REPROCESS.toString());
+				registrationStatusDto.setStatusComment(
+						trimeExpMessage.trimExceptionMessage(StatusUtil.IO_EXCEPTION.getMessage() + e.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.IO_EXCEPTION.getCode());
+				description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
+				description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
+				object.setInternalError(Boolean.TRUE);
+			} catch (Exception e) {
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						regId, PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.name() + e.getMessage()
+								+ ExceptionUtils.getStackTrace(e));
+				registrationStatusDto
+						.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.REPROCESS.toString());
+				registrationStatusDto.setStatusComment(
+						trimeExpMessage.trimExceptionMessage(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getCode());
+				description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
+				description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
+				object.setInternalError(Boolean.TRUE);
 			}
-		} catch (ApisResourceAccessException e) {
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					regId, PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.name() + e.getMessage()
-							+ ExceptionUtils.getStackTrace(e));
-			registrationStatusDto
-					.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.REPROCESS.toString());
-			registrationStatusDto.setStatusComment(trimeExpMessage.trimExceptionMessage(
-					StatusUtil.API_RESOUCE_ACCESS_FAILED.getMessage() + SEPERATOR + e.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.API_RESOUCE_ACCESS_FAILED.getCode());
-			description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
-			description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
-			object.setInternalError(Boolean.TRUE);
-		} catch (IOException e) {
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					regId, PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.name() + e.getMessage()
-							+ ExceptionUtils.getStackTrace(e));
-			registrationStatusDto
-					.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.REPROCESS.toString());
-			registrationStatusDto.setStatusComment(
-					trimeExpMessage.trimExceptionMessage(StatusUtil.IO_EXCEPTION.getMessage() + e.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.IO_EXCEPTION.getCode());
-			description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
-			description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
-			object.setInternalError(Boolean.TRUE);
-		} catch (Exception e) {
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					regId, PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.name() + e.getMessage()
-							+ ExceptionUtils.getStackTrace(e));
-			registrationStatusDto
-					.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.REPROCESS.toString());
-			registrationStatusDto.setStatusComment(
-					trimeExpMessage.trimExceptionMessage(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getCode());
-			description.setMessage(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getMessage());
-			description.setCode(PlatformErrorMessages.RPR_PRT_PRINT_REQUEST_FAILED.getCode());
-			object.setInternalError(Boolean.TRUE);
-		}
-		finally {
-			if (object.getInternalError()) {
-				updateErrorFlags(registrationStatusDto, object);
+			finally {
+				if (object.getInternalError()) {
+					updateErrorFlags(registrationStatusDto, object);
+				}
+				String eventId = "";
+				String eventName = "";
+				String eventType = "";
+				eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
+				eventName = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventName.UPDATE.toString()
+						: EventName.EXCEPTION.toString();
+				eventType = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventType.BUSINESS.toString()
+						: EventType.SYSTEM.toString();
+				/** Module-Id can be Both Success/Error code */
+				String moduleId = isTransactionSuccessful
+						? PlatformSuccessMessages.RPR_PRINT_STAGE_REQUEST_SUCCESS.getCode()
+						: description.getCode();
+				String moduleName = ModuleName.PRINT_STAGE.toString();
+				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
+
+				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
+						moduleId, moduleName, regId);
 			}
-			String eventId = "";
-			String eventName = "";
-			String eventType = "";
-			eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
-			eventName = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventName.UPDATE.toString()
-					: EventName.EXCEPTION.toString();
-			eventType = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventType.BUSINESS.toString()
-					: EventType.SYSTEM.toString();
-			/** Module-Id can be Both Success/Error code */
-			String moduleId = isTransactionSuccessful
-					? PlatformSuccessMessages.RPR_PRINT_STAGE_REQUEST_SUCCESS.getCode()
-					: description.getCode();
-			String moduleName = ModuleName.PRINT_STAGE.toString();
-			registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
-
-			auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
-					moduleId, moduleName, regId);
-
+		} else {
+			object.setSkipEvent(true);
 		}
+
 		return object;
 	}
 

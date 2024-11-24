@@ -169,142 +169,148 @@ public class BioDedupeProcessor {
 		boolean isDuplicateRequestForSameTransactionId = false;
 
 		InternalRegistrationStatusDto registrationStatusDto = new InternalRegistrationStatusDto();
-		try {
-			registrationStatusDto = registrationStatusService.getRegistrationStatus(
-					registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
-			String registrationType = registrationStatusDto.getRegistrationType();
-			if (registrationType.equalsIgnoreCase(SyncTypeDto.NEW.toString())
-			|| (subProcesses != null && subProcesses.contains(registrationType))) {
-				String packetStatus = abisHandlerUtil.getPacketStatus(registrationStatusDto);
-				if (packetStatus.equalsIgnoreCase(AbisConstant.PRE_ABIS_IDENTIFICATION)) {
-					newPacketPreAbisIdentification(registrationStatusDto, object);
-				} else if (packetStatus.equalsIgnoreCase(AbisConstant.POST_ABIS_IDENTIFICATION)) {
-					postAbisIdentification(registrationStatusDto, object, registrationType);
+		registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
+				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.BIOGRAPHIC_VERIFICATION);
+
+		if(registrationStatusDto != null) {
+			try {
+				String registrationType = registrationStatusDto.getRegistrationType();
+				if (registrationType.equalsIgnoreCase(SyncTypeDto.NEW.toString())
+						|| (subProcesses != null && subProcesses.contains(registrationType))) {
+					String packetStatus = abisHandlerUtil.getPacketStatus(registrationStatusDto);
+					if (packetStatus.equalsIgnoreCase(AbisConstant.PRE_ABIS_IDENTIFICATION)) {
+						newPacketPreAbisIdentification(registrationStatusDto, object);
+					} else if (packetStatus.equalsIgnoreCase(AbisConstant.POST_ABIS_IDENTIFICATION)) {
+						postAbisIdentification(registrationStatusDto, object, registrationType);
+
+					}
+
+				} else if (registrationType.equalsIgnoreCase(SyncTypeDto.UPDATE.toString())
+						|| registrationType.equalsIgnoreCase(SyncTypeDto.RES_UPDATE.toString())) {
+					String packetStatus = abisHandlerUtil.getPacketStatus(registrationStatusDto);
+					if (packetStatus.equalsIgnoreCase(AbisConstant.PRE_ABIS_IDENTIFICATION)) {
+						updatePacketPreAbisIdentification(registrationStatusDto, object);
+					} else if (packetStatus.equalsIgnoreCase(AbisConstant.POST_ABIS_IDENTIFICATION)) {
+						postAbisIdentification(registrationStatusDto, object, registrationType);
+					}
+
+				} else if (registrationType.equalsIgnoreCase(SyncTypeDto.LOST.toString())
+						&& isValidCbeff(object)) {
+					String packetStatus = abisHandlerUtil.getPacketStatus(registrationStatusDto);
+
+					if (packetStatus.equalsIgnoreCase(AbisConstant.PRE_ABIS_IDENTIFICATION)) {
+						lostPacketPreAbisIdentification(registrationStatusDto, object);
+					} else if (packetStatus.equalsIgnoreCase(AbisConstant.POST_ABIS_IDENTIFICATION)) {
+						Set<String> matchedRegIds = abisHandlerUtil
+								.getUniqueRegIds(registrationStatusDto.getRegistrationId(),
+										registrationType, object.getIteration(), object.getWorkflowInstanceId(), ProviderStageName.BIO_DEDUPE);
+						lostPacketPostAbisIdentification(registrationStatusDto, object, matchedRegIds);
+					}
 
 				}
 
-			} else if (registrationType.equalsIgnoreCase(SyncTypeDto.UPDATE.toString())
-					|| registrationType.equalsIgnoreCase(SyncTypeDto.RES_UPDATE.toString())) {
-				String packetStatus = abisHandlerUtil.getPacketStatus(registrationStatusDto);
-				if (packetStatus.equalsIgnoreCase(AbisConstant.PRE_ABIS_IDENTIFICATION)) {
-					updatePacketPreAbisIdentification(registrationStatusDto, object);
-				} else if (packetStatus.equalsIgnoreCase(AbisConstant.POST_ABIS_IDENTIFICATION)) {
-					postAbisIdentification(registrationStatusDto, object, registrationType);
+				if (abisHandlerUtil.getPacketStatus(registrationStatusDto).equalsIgnoreCase(AbisConstant.DUPLICATE_FOR_SAME_TRANSACTION_ID))
+					isDuplicateRequestForSameTransactionId = true;
+
+				registrationStatusDto.setRegistrationStageName(stageName);
+				isTransactionSuccessful = true;
+
+			} catch (DataAccessException e) {
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
+				registrationStatusDto.setStatusComment(trimExceptionMessage
+						.trimExceptionMessage(StatusUtil.DB_NOT_ACCESSIBLE.getMessage() + e.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.DB_NOT_ACCESSIBLE.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(
+						registrationExceptionMapperUtil.getStatusCode(RegistrationExceptionTypeCode.DATA_ACCESS_EXCEPTION));
+				description.setCode(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getCode());
+				description.setMessage(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getMessage());
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+						description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
+						description.getMessage() + "\n" + ExceptionUtils.getStackTrace(e));
+				object.setInternalError(Boolean.TRUE);
+			} catch (ApisResourceAccessException e) {
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
+				registrationStatusDto.setStatusComment(
+						trimExceptionMessage.trimExceptionMessage(StatusUtil.API_RESOUCE_ACCESS_FAILED + e.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.API_RESOUCE_ACCESS_FAILED.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(registrationExceptionMapperUtil
+						.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION));
+				description.setCode(PlatformErrorMessages.RPR_BIO_API_RESOUCE_ACCESS_FAILED.getCode());
+				description.setMessage(PlatformErrorMessages.RPR_BIO_API_RESOUCE_ACCESS_FAILED.getMessage());
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+						description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
+						description + "\n" + ExceptionUtils.getStackTrace(e));
+				object.setInternalError(Boolean.TRUE);
+			} catch (CbeffNotFoundException ex) {
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
+				registrationStatusDto.setStatusComment(StatusUtil.CBEF_NOT_FOUND.getMessage());
+				registrationStatusDto.setSubStatusCode(StatusUtil.CBEF_NOT_FOUND.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(registrationExceptionMapperUtil
+						.getStatusCode(RegistrationExceptionTypeCode.CBEFF_NOT_PRESENT_EXCEPTION));
+				description.setCode(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getCode());
+				description.setMessage(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getMessage());
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+						description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
+						description.getMessage() + "\n" + ExceptionUtils.getStackTrace(ex));
+				object.setInternalError(Boolean.TRUE);
+			} catch (IdentityNotFoundException | IOException ex) {
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
+				registrationStatusDto.setStatusComment(trimExceptionMessage
+						.trimExceptionMessage(StatusUtil.SYSTEM_EXCEPTION_OCCURED.getMessage() + ex.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.SYSTEM_EXCEPTION_OCCURED.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(
+						registrationExceptionMapperUtil.getStatusCode(RegistrationExceptionTypeCode.IOEXCEPTION));
+				description.setCode(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getCode());
+				description.setMessage(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getMessage());
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+						description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
+						description.getMessage() + "\n" + ExceptionUtils.getStackTrace(ex));
+				object.setInternalError(Boolean.TRUE);
+			} catch (Exception ex) {
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
+				registrationStatusDto.setStatusComment(trimExceptionMessage
+						.trimExceptionMessage(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getMessage() + ex.getMessage()));
+				registrationStatusDto.setSubStatusCode(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getCode());
+				registrationStatusDto.setLatestTransactionStatusCode(
+						registrationExceptionMapperUtil.getStatusCode(RegistrationExceptionTypeCode.EXCEPTION));
+				description.setCode(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getCode());
+				description.setMessage(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getMessage());
+				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+						description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
+						description.getMessage() + "\n" + ExceptionUtils.getStackTrace(ex));
+				object.setInternalError(Boolean.TRUE);
+			} finally {
+				if (!isDuplicateRequestForSameTransactionId) {
+					if (object.getInternalError()) {
+						updateErrorFlags(registrationStatusDto, object);
+					}
+					registrationStatusDto
+							.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.BIOGRAPHIC_VERIFICATION.toString());
+					String moduleId = isTransactionSuccessful ? PlatformSuccessMessages.RPR_BIO_DEDUPE_SUCCESS.getCode()
+							: description.getCode();
+					String moduleName = ModuleName.BIO_DEDUPE.name();
+					registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
+
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "BioDedupeProcessor::" + registrationStatusDto.getLatestTransactionStatusCode());
+
+					String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
+					String eventName = isTransactionSuccessful ? EventName.UPDATE.toString() : EventName.EXCEPTION.toString();
+					String eventType = isTransactionSuccessful ? EventType.BUSINESS.toString() : EventType.SYSTEM.toString();
+
+					auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
+							moduleId, moduleName, registrationId);
+				} else {
+					regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "Duplicate request received for same latest transaction id. This will be ignored.");
+					object.setIsValid(false);
+					object.setInternalError(true);
 				}
-
-			} else if (registrationType.equalsIgnoreCase(SyncTypeDto.LOST.toString())
-					&& isValidCbeff(object)) {
-				String packetStatus = abisHandlerUtil.getPacketStatus(registrationStatusDto);
-
-				if (packetStatus.equalsIgnoreCase(AbisConstant.PRE_ABIS_IDENTIFICATION)) {
-					lostPacketPreAbisIdentification(registrationStatusDto, object);
-				} else if (packetStatus.equalsIgnoreCase(AbisConstant.POST_ABIS_IDENTIFICATION)) {
-					Set<String> matchedRegIds = abisHandlerUtil
-							.getUniqueRegIds(registrationStatusDto.getRegistrationId(),
-									registrationType, object.getIteration(), object.getWorkflowInstanceId(), ProviderStageName.BIO_DEDUPE);
-					lostPacketPostAbisIdentification(registrationStatusDto, object, matchedRegIds);
-				}
-
 			}
-
-			if (abisHandlerUtil.getPacketStatus(registrationStatusDto).equalsIgnoreCase(AbisConstant.DUPLICATE_FOR_SAME_TRANSACTION_ID))
-				isDuplicateRequestForSameTransactionId = true;
-
-			registrationStatusDto.setRegistrationStageName(stageName);
-			isTransactionSuccessful = true;
-
-		} catch (DataAccessException e) {
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
-			registrationStatusDto.setStatusComment(trimExceptionMessage
-					.trimExceptionMessage(StatusUtil.DB_NOT_ACCESSIBLE.getMessage() + e.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.DB_NOT_ACCESSIBLE.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(
-					registrationExceptionMapperUtil.getStatusCode(RegistrationExceptionTypeCode.DATA_ACCESS_EXCEPTION));
-			description.setCode(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getCode());
-			description.setMessage(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getMessage());
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-					description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
-					description.getMessage() + "\n" + ExceptionUtils.getStackTrace(e));
-			object.setInternalError(Boolean.TRUE);
-		} catch (ApisResourceAccessException e) {
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
-			registrationStatusDto.setStatusComment(
-					trimExceptionMessage.trimExceptionMessage(StatusUtil.API_RESOUCE_ACCESS_FAILED + e.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.API_RESOUCE_ACCESS_FAILED.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(registrationExceptionMapperUtil
-					.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION));
-			description.setCode(PlatformErrorMessages.RPR_BIO_API_RESOUCE_ACCESS_FAILED.getCode());
-			description.setMessage(PlatformErrorMessages.RPR_BIO_API_RESOUCE_ACCESS_FAILED.getMessage());
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-					description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
-					description + "\n" + ExceptionUtils.getStackTrace(e));
-			object.setInternalError(Boolean.TRUE);
-		} catch (CbeffNotFoundException ex) {
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
-			registrationStatusDto.setStatusComment(StatusUtil.CBEF_NOT_FOUND.getMessage());
-			registrationStatusDto.setSubStatusCode(StatusUtil.CBEF_NOT_FOUND.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(registrationExceptionMapperUtil
-					.getStatusCode(RegistrationExceptionTypeCode.CBEFF_NOT_PRESENT_EXCEPTION));
-			description.setCode(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getCode());
-			description.setMessage(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getMessage());
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-					description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
-					description.getMessage() + "\n" + ExceptionUtils.getStackTrace(ex));
-			object.setInternalError(Boolean.TRUE);
-		} catch (IdentityNotFoundException | IOException ex) {
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
-			registrationStatusDto.setStatusComment(trimExceptionMessage
-					.trimExceptionMessage(StatusUtil.SYSTEM_EXCEPTION_OCCURED.getMessage() + ex.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.SYSTEM_EXCEPTION_OCCURED.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(
-					registrationExceptionMapperUtil.getStatusCode(RegistrationExceptionTypeCode.IOEXCEPTION));
-			description.setCode(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getCode());
-			description.setMessage(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getMessage());
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-					description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
-					description.getMessage() + "\n" + ExceptionUtils.getStackTrace(ex));
-			object.setInternalError(Boolean.TRUE);
-		} catch (Exception ex) {
-			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
-			registrationStatusDto.setStatusComment(trimExceptionMessage
-					.trimExceptionMessage(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getMessage() + ex.getMessage()));
-			registrationStatusDto.setSubStatusCode(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getCode());
-			registrationStatusDto.setLatestTransactionStatusCode(
-					registrationExceptionMapperUtil.getStatusCode(RegistrationExceptionTypeCode.EXCEPTION));
-			description.setCode(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getCode());
-			description.setMessage(PlatformErrorMessages.PACKET_BIO_DEDUPE_FAILED.getMessage());
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-					description.getCode() + " -- " + LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
-					description.getMessage() + "\n" + ExceptionUtils.getStackTrace(ex));
-			object.setInternalError(Boolean.TRUE);
-		} finally {
-			if (!isDuplicateRequestForSameTransactionId) {
-				if (object.getInternalError()) {
-					updateErrorFlags(registrationStatusDto, object);
-				}
-				registrationStatusDto
-						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.BIOGRAPHIC_VERIFICATION.toString());
-				String moduleId = isTransactionSuccessful ? PlatformSuccessMessages.RPR_BIO_DEDUPE_SUCCESS.getCode()
-						: description.getCode();
-				String moduleName = ModuleName.BIO_DEDUPE.name();
-				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
-
-				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						registrationId, "BioDedupeProcessor::" + registrationStatusDto.getLatestTransactionStatusCode());
-
-				String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
-				String eventName = isTransactionSuccessful ? EventName.UPDATE.toString() : EventName.EXCEPTION.toString();
-				String eventType = isTransactionSuccessful ? EventType.BUSINESS.toString() : EventType.SYSTEM.toString();
-
-				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
-						moduleId, moduleName, registrationId);
-			} else {
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						registrationId, "Duplicate request received for same latest transaction id. This will be ignored.");
-				object.setIsValid(false);
-				object.setInternalError(true);
-			}
+		} else {
+			object.setSkipEvent(true);
 		}
+
 		return object;
 	}
 

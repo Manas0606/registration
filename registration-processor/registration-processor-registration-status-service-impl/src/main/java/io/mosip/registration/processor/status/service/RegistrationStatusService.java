@@ -2,6 +2,7 @@ package io.mosip.registration.processor.status.service;
 
 import java.util.List;
 
+import io.mosip.registration.processor.core.code.RegistrationTransactionTypeCode;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -164,4 +165,5 @@ public interface RegistrationStatusService<T, U, D> {
 
 	public List<InternalRegistrationStatusDto> getResumablePackets(Integer fetchSize);
 
+	public U checkPacketProcessStatus(String regid, String processs, Integer iteration, String workflowInstanceId, RegistrationTransactionTypeCode typeCode);
 }
