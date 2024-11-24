@@ -2,11 +2,7 @@ package io.mosip.registration.processor.status.service.impl;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import io.mosip.registration.processor.core.code.RegistrationTransactionTypeCode;
@@ -893,7 +889,7 @@ public class RegistrationStatusServiceImpl
 					registrationId, "RegistrationStatusServiceImpl::getRegistrationStatus()::exit");
 
 			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(),
-					registrationId, "allowedStatusForPacketProcess: " + allowedStatusForPacketProcess.toArray().toString());
+					registrationId, "allowedStatusForPacketProcess: " + Arrays.toString(allowedStatusForPacketProcess.toArray()));
 
 			if(!allowedStatusForPacketProcess.contains(entity.getLatestTransactionStatusCode())) {
 				entity.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.IN_PROGRESS.toString());
