@@ -893,7 +893,7 @@ public class RegistrationStatusServiceImpl
 					registrationId, "RegistrationStatusServiceImpl::getRegistrationStatus()::exit");
 
 			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(),
-					registrationId, "allowedStatusForPacketProcess: " , allowedStatusForPacketProcess.toArray());
+					registrationId, "allowedStatusForPacketProcess: " + allowedStatusForPacketProcess.toArray());
 
 			if(!allowedStatusForPacketProcess.contains(entity.getLatestTransactionStatusCode())) {
 				entity.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.IN_PROGRESS.toString());
