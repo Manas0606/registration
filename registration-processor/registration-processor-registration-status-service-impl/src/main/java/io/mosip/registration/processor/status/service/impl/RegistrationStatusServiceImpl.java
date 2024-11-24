@@ -71,7 +71,7 @@ public class RegistrationStatusServiceImpl
 	@Value("#{'${registration.processor.main-processes}'.split(',')}")
 	private List<String> mainProcess;
 
-	@Value("#{'${registration.processor.allowed-status-for-process:FAILED,REPROCESS,ERROR,SUCCESS}'.split(',')}")
+	@Value("#{'${registration.processor.allowed-status-for-process:FAILED,ERROR,SUCCESS}'.split(',')}")
 	private List<String> allowedStatusForPacketProcess;
 
 	/** The reg proc logger. */
