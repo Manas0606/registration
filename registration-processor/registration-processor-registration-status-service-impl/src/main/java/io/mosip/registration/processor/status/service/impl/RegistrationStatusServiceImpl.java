@@ -71,8 +71,8 @@ public class RegistrationStatusServiceImpl
 	@Value("#{'${registration.processor.main-processes}'.split(',')}")
 	private List<String> mainProcess;
 
-	@Value("#{'${registration.processor.allowed-status-for-process:FAILED,ERROR,SUCCESS}'.split(',')}")
-	private List<String> allowedStatusForPacketProcess;
+	@Value("#{'${registration.processor.allowed-status-for-process:PROCESSING}'.split(',')}")
+	private List<String> notAllowedStatusForPacketProcess;
 
 	/** The reg proc logger. */
 	private static Logger regProcLogger = RegProcessorLogger.getLogger(RegistrationStatusServiceImpl.class);
@@ -889,10 +889,10 @@ public class RegistrationStatusServiceImpl
 					registrationId, "RegistrationStatusServiceImpl::getRegistrationStatus()::exit");
 
 			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(),
-					registrationId, "allowedStatusForPacketProcess: " + Arrays.toString(allowedStatusForPacketProcess.toArray()));
+					registrationId, "allowedStatusForPacketProcess: " + Arrays.toString(notAllowedStatusForPacketProcess.toArray()));
 
-			if(!allowedStatusForPacketProcess.contains(entity.getLatestTransactionStatusCode())) {
-				entity.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.IN_PROGRESS.toString());
+			if(!notAllowedStatusForPacketProcess.contains(entity.getLatestTransactionStatusCode())) {
+				entity.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.PROCESSING.toString());
 				entity.setLatestTransactionTypeCode(typeCode.toString());
 				String transactionId = generateId();
 				entity.setLatestRegistrationTransactionId(transactionId);
