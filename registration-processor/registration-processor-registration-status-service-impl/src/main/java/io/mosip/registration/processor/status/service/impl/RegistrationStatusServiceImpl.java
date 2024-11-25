@@ -897,7 +897,7 @@ public class RegistrationStatusServiceImpl
 				String transactionId = generateId();
 				entity.setLatestRegistrationTransactionId(transactionId);
 				entity.setLatestTransactionTimes(LocalDateTime.now(ZoneId.of("UTC")));
-				registrationStatusDao.save(entity);
+				registrationStatusDao.update(entity);
 
 			} else
 				entity = null;
