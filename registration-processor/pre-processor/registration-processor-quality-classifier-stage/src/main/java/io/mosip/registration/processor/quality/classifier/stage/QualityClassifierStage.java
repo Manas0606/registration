@@ -225,12 +225,11 @@ public class QualityClassifierStage extends MosipVerticleAPIManager {
 				"QualityCheckerStage::process()::entry");
 
 		long startTime = System.currentTimeMillis();
-		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.checkPacketProcessStatus(regId,
-				object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.QUALITY_CLASSIFIER);
+		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(regId,
+				object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"QualityCheckerStage::Time taken to find rid info - " + (System.currentTimeMillis() - startTime) + " (ms)");
 
-		if(registrationStatusDto != null) {
 			try {
 				String individualBiometricsObject = basedPacketManagerService.getFieldByMappingJsonKey(regId,
 						MappingJsonConstants.INDIVIDUAL_BIOMETRICS, registrationStatusDto.getRegistrationType(),
@@ -401,9 +400,6 @@ public class QualityClassifierStage extends MosipVerticleAPIManager {
 						moduleId, moduleName, regId);
 
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
 
 		return object;
 	}

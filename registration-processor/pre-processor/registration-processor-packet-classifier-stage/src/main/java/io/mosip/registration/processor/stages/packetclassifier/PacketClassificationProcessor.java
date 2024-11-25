@@ -198,6 +198,8 @@ public class PacketClassificationProcessor {
 		registrationStatusDto.setLatestTransactionTypeCode(
 			RegistrationTransactionTypeCode.PACKET_CLASSIFICATION.toString());
 		registrationStatusDto.setRegistrationStageName(stageName);
+
+		try {
 		object.setMessageBusAddress(MessageBusAddress.PACKET_CLASSIFIER_BUS_IN);
 		object.setIsValid(Boolean.FALSE);
 		object.setInternalError(Boolean.TRUE);
@@ -207,11 +209,8 @@ public class PacketClassificationProcessor {
 				"PacketClassificationProcessor::process()::entry");
 		registrationId = object.getRid();
 
-		registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
-				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.PACKET_CLASSIFICATION);
-
-		if(registrationStatusDto != null) {
-			try {
+			registrationStatusDto = registrationStatusService.getRegistrationStatus(
+					registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 				registrationStatusDto.setLatestTransactionTypeCode(
 						RegistrationTransactionTypeCode.PACKET_CLASSIFICATION.toString());
 				registrationStatusDto.setRegistrationStageName(stageName);
@@ -285,9 +284,6 @@ public class PacketClassificationProcessor {
 				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
 				updateAudit(description, isTransactionSuccessful, moduleId, moduleName, registrationId);
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
 
 		return object;
 	}

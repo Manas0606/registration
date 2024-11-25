@@ -163,9 +163,8 @@ public class DemodedupeProcessor {
 		String moduleId = PlatformSuccessMessages.RPR_PKR_DEMO_DE_DUP.getCode();
 		boolean isDuplicateRequestForSameTransactionId = false;
 		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService
-				.checkPacketProcessStatus(registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.DEMOGRAPHIC_VERIFICATION);
+				.getRegistrationStatus(registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 
-		if(registrationStatusDto != null) {
 			try {
 
 				IndividualDemographicDedupe demographicData = packetInfoManager.
@@ -291,9 +290,6 @@ public class DemodedupeProcessor {
 					object.setInternalError(true);
 				}
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
 
 		return object;
 	}

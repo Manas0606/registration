@@ -181,6 +181,10 @@ public class PacketValidateProcessor {
 		PacketValidationDto packetValidationDto = new PacketValidationDto();
 		String registrationId = null;
 		InternalRegistrationStatusDto registrationStatusDto = new InternalRegistrationStatusDto();
+		try {
+			registrationStatusDto
+					.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PRINT_SERVICE.toString());
+			registrationStatusDto.setRegistrationStageName(stageName);
 		object.setMessageBusAddress(MessageBusAddress.PACKET_VALIDATOR_BUS_IN);
 		object.setIsValid(Boolean.FALSE);
 		object.setInternalError(Boolean.TRUE);
@@ -188,16 +192,8 @@ public class PacketValidateProcessor {
 				"", "PacketValidateProcessor::process()::entry");
 		registrationId = object.getRid();
 		packetValidationDto.setTransactionSuccessful(false);
-		registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
-				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.VALIDATE_PACKET);
-
-		if(registrationStatusDto != null) {
-			try {
-				registrationStatusDto
-						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.VALIDATE_PACKET.toString());
-				registrationStatusDto.setRegistrationStageName(stageName);
-
-
+			registrationStatusDto = registrationStatusService.getRegistrationStatus(
+					registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 				setPacketCreatedDateTime(registrationStatusDto);
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.VALIDATE_PACKET.toString());
@@ -463,9 +459,6 @@ public class PacketValidateProcessor {
 				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
 						moduleId, moduleName, registrationId);
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
 
 		return object;
 	}

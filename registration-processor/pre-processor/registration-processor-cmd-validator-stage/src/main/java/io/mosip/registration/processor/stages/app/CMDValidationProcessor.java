@@ -118,9 +118,8 @@ public class CMDValidationProcessor {
 		registrationId = object.getRid();
 
 		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService
-				.checkPacketProcessStatus(registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.CMD_VALIDATION);
+				.getRegistrationStatus(registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 
-		if(registrationStatusDto != null) {
 			registrationStatusDto.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.CMD_VALIDATION.toString());
 			registrationStatusDto.setRegistrationStageName(stageName);
 			try {
@@ -242,10 +241,6 @@ public class CMDValidationProcessor {
 				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
 				updateAudit(description, isTransactionSuccessful, moduleId, moduleName, registrationId);
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
-
 		return object;
 	}
 

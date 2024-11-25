@@ -194,11 +194,12 @@ public class PacketUploaderServiceImpl implements PacketUploaderService<MessageD
         regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
                 registrationId, "PacketUploaderServiceImpl::validateAndUploadPacket()::entry");
         SyncRegistrationEntity regEntity = null;
+
+        try {
         regEntity = syncRegistrationService.findByWorkflowInstanceId(messageDTO.getWorkflowInstanceId());
-        dto = registrationStatusService.checkPacketProcessStatus(
-                registrationId, messageDTO.getReg_type(), messageDTO.getIteration(), regEntity.getWorkflowInstanceId(), RegistrationTransactionTypeCode.UPLOAD_PACKET);
-        if(dto != null) {
-            try {
+            dto = registrationStatusService.getRegistrationStatus(
+                    registrationId, messageDTO.getReg_type(), messageDTO.getIteration(), regEntity.getWorkflowInstanceId());
+
                 dto.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.UPLOAD_PACKET.toString());
                 dto.setRegistrationStageName(stageName);
 
@@ -384,9 +385,7 @@ public class PacketUploaderServiceImpl implements PacketUploaderService<MessageD
 
                 auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
                         moduleId, moduleName, registrationId);
-            }
-        } else {
-            messageDTO.setSkipEvent(true);
+
         }
 
         regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),

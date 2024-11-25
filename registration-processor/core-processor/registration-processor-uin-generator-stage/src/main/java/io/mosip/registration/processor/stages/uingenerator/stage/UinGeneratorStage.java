@@ -225,10 +225,8 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 				registrationId, "UinGeneratorStage::process()::entry");
 		UinGenResponseDto uinResponseDto = null;
 
-		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
-				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.UIN_GENERATOR);
-
-		if(registrationStatusDto != null) {
+		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(
+				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 			try {
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.UIN_GENERATOR.toString());
@@ -461,9 +459,6 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 						moduleId, moduleName, registrationId);
 
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
 
 		return object;
 	}

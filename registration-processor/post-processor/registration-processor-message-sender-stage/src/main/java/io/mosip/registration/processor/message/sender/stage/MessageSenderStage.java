@@ -215,10 +215,8 @@ public class MessageSenderStage extends MosipVerticleAPIManager {
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), id,
 				"MessageSenderStage::process()::entry");
 		SyncRegistrationEntity regEntity = syncRegistrationservice.findByWorkflowInstanceId(object.getWorkflowInstanceId());
-		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
-				id, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.NOTIFICATION);
-
-		if(registrationStatusDto != null) {
+		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(
+				id, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 			status = registrationStatusDto.getLatestTransactionTypeCode() + "_"
 					+ registrationStatusDto.getLatestTransactionStatusCode();
 
@@ -363,9 +361,6 @@ public class MessageSenderStage extends MosipVerticleAPIManager {
 				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
 						moduleId, moduleName, id);
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
 
 		return object;
 	}

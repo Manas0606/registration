@@ -169,11 +169,9 @@ public class BioDedupeProcessor {
 		boolean isDuplicateRequestForSameTransactionId = false;
 
 		InternalRegistrationStatusDto registrationStatusDto = new InternalRegistrationStatusDto();
-		registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
-				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.BIOGRAPHIC_VERIFICATION);
-
-		if(registrationStatusDto != null) {
 			try {
+			registrationStatusDto = registrationStatusService.getRegistrationStatus(
+					registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 				String registrationType = registrationStatusDto.getRegistrationType();
 				if (registrationType.equalsIgnoreCase(SyncTypeDto.NEW.toString())
 						|| (subProcesses != null && subProcesses.contains(registrationType))) {
@@ -307,10 +305,6 @@ public class BioDedupeProcessor {
 					object.setInternalError(true);
 				}
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
-
 		return object;
 	}
 

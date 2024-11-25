@@ -2,7 +2,11 @@ package io.mosip.registration.processor.status.service.impl;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import io.mosip.registration.processor.core.code.RegistrationTransactionTypeCode;
@@ -70,9 +74,6 @@ public class RegistrationStatusServiceImpl
 
 	@Value("#{'${registration.processor.main-processes}'.split(',')}")
 	private List<String> mainProcess;
-
-	@Value("#{'${registration.processor.allowed-status-for-process:PROCESSING}'.split(',')}")
-	private List<String> notAllowedStatusForPacketProcess;
 
 	/** The reg proc logger. */
 	private static Logger regProcLogger = RegProcessorLogger.getLogger(RegistrationStatusServiceImpl.class);
@@ -278,10 +279,10 @@ public class RegistrationStatusServiceImpl
 				"RegistrationStatusServiceImpl::updateRegistrationStatus()::entry");
 		boolean isTransactionSuccessful = false;
 		LogDescription description = new LogDescription();
-		//String transactionId = generateId();
+		String transactionId = generateId();
 		String latestTransactionId = getLatestTransactionId(registrationStatusDto.getRegistrationId(),
 				registrationStatusDto.getRegistrationType(), registrationStatusDto.getIteration(), registrationStatusDto.getWorkflowInstanceId());
-		TransactionDto transactionDto = new TransactionDto(registrationStatusDto.getLatestRegistrationTransactionId(), registrationStatusDto.getRegistrationId(),
+		TransactionDto transactionDto = new TransactionDto(transactionId, registrationStatusDto.getRegistrationId(),
 				latestTransactionId, registrationStatusDto.getLatestTransactionTypeCode(),
 				"updated registration status record", registrationStatusDto.getLatestTransactionStatusCode(),
 				registrationStatusDto.getStatusComment(), registrationStatusDto.getSubStatusCode());
@@ -294,7 +295,7 @@ public class RegistrationStatusServiceImpl
 		transactionDto.setReferenceIdType("updated registration record");
 		transcationStatusService.addRegistrationTransaction(transactionDto);
 
-	//	registrationStatusDto.setLatestRegistrationTransactionId(transactionId);
+		registrationStatusDto.setLatestRegistrationTransactionId(transactionId);
 		try {
 			InternalRegistrationStatusDto dto = getRegistrationStatus(registrationStatusDto.getRegistrationId(),
 					registrationStatusDto.getRegistrationType(), registrationStatusDto.getIteration(), registrationStatusDto.getWorkflowInstanceId());
@@ -872,41 +873,6 @@ public class RegistrationStatusServiceImpl
 
 			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 					"", e.getMessage() + ExceptionUtils.getStackTrace(e));
-			throw new TablenotAccessibleException(
-					PlatformErrorMessages.RPR_RGS_REGISTRATION_TABLE_NOT_ACCESSIBLE.getMessage(), e);
-		}
-	}
-
-	@Override
-	public InternalRegistrationStatusDto checkPacketProcessStatus(String registrationId, String process, Integer iteration, String workflowInstanceId, RegistrationTransactionTypeCode typeCode) {
-
-		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(),
-				registrationId, "RegistrationStatusServiceImpl::getRegistrationStatus()::entry");
-		try {
-			RegistrationStatusEntity entity = registrationStatusDao.find(registrationId, process, iteration, workflowInstanceId);
-
-			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(),
-					registrationId, "RegistrationStatusServiceImpl::getRegistrationStatus()::exit");
-
-			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(),
-					registrationId, "allowedStatusForPacketProcess: " + Arrays.toString(notAllowedStatusForPacketProcess.toArray()));
-
-			if(!notAllowedStatusForPacketProcess.contains(entity.getLatestTransactionStatusCode())) {
-				entity.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.PROCESSING.toString());
-				entity.setLatestTransactionTypeCode(typeCode.toString());
-				String transactionId = generateId();
-				entity.setLatestRegistrationTransactionId(transactionId);
-				entity.setLatestTransactionTimes(LocalDateTime.now(ZoneId.of("UTC")));
-				registrationStatusDao.update(entity);
-
-			} else
-				entity = null;
-
-			return entity != null ? convertEntityToDto(entity) : null;
-		} catch (DataAccessLayerException e) {
-
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId, e.getMessage() + ExceptionUtils.getStackTrace(e));
 			throw new TablenotAccessibleException(
 					PlatformErrorMessages.RPR_RGS_REGISTRATION_TABLE_NOT_ACCESSIBLE.getMessage(), e);
 		}

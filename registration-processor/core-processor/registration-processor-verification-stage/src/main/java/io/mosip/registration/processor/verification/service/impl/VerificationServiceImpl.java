@@ -216,11 +216,9 @@ public class VerificationServiceImpl implements VerificationService {
 		boolean isTransactionSuccessful = true;
 		LogDescription description = new LogDescription();
 
-		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
+		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(
 				messageDTO.getRid(), messageDTO.getReg_type(), messageDTO.getIteration(),
-				messageDTO.getWorkflowInstanceId(), RegistrationTransactionTypeCode.VERIFICATION);
-
-		if(registrationStatusDto != null) {
+				messageDTO.getWorkflowInstanceId());
 			try {
 				if (null == messageDTO.getRid() || messageDTO.getRid().isEmpty())
 					throw new InvalidRidException(PlatformErrorMessages.RPR_MVS_NO_RID_SHOULD_NOT_EMPTY_OR_NULL.getCode(),
@@ -286,9 +284,6 @@ public class VerificationServiceImpl implements VerificationService {
 				updateStatus(messageDTO, registrationStatusDto, isTransactionSuccessful, description,
 						PlatformSuccessMessages.RPR_VERIFICATION_SENT);
 			}
-		} else {
-			messageDTO.setSkipEvent(true);
-		}
 
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 				messageDTO.getRid(), "VerificationServiceImpl::process()::entry");

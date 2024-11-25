@@ -136,11 +136,9 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 		InternalRegistrationStatusDto registrationStatusDto =null;
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 				registrationId, "FinalizationStage::process()::entry");
-		registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
-				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.FINALIZATION);
-
-		if(registrationStatusDto != null) {
 			try {
+		 registrationStatusDto = registrationStatusService.getRegistrationStatus(
+				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.FINALIZATION.toString());
 				registrationStatusDto.setRegistrationStageName(getStageName());
@@ -270,9 +268,6 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 						moduleId, moduleName, registrationId);
 
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
 
 		return object;
 	}

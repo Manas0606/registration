@@ -88,9 +88,8 @@ public class OperatorValidationProcessor {
 		registrationId = object.getRid();
 
 		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService
-				.checkPacketProcessStatus(registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.OPERATOR_VALIDATION);
+				.getRegistrationStatus(registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 
-		if(registrationStatusDto != null) {
 			registrationStatusDto
 					.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.OPERATOR_VALIDATION.toString());
 			registrationStatusDto.setRegistrationStageName(stageName);
@@ -188,9 +187,6 @@ public class OperatorValidationProcessor {
 				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
 				updateAudit(description, isTransactionSuccessful, moduleId, moduleName, registrationId);
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
 
 		return object;
 	}

@@ -42,8 +42,6 @@ public class MessageDTO implements Serializable {
 
 	private String workflowInstanceId;
 
-	private Boolean skipEvent;
-
 	/**
 	 * Instantiates a new message DTO.
 	 */
@@ -211,14 +209,6 @@ public class MessageDTO implements Serializable {
 
 	public String getWorkflowInstanceId() {
 		return workflowInstanceId;
-	}
-
-	public Boolean getSkipEvent() {
-		return skipEvent;
-	}
-
-	public void setSkipEvent(Boolean skipEvent) {
-		this.skipEvent = skipEvent;
 	}
 
 	public void setWorkflowInstanceId(String workflowInstanceId) {

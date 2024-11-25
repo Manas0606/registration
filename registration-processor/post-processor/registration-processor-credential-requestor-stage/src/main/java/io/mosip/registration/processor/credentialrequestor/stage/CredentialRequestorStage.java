@@ -190,11 +190,9 @@ public class CredentialRequestorStage extends MosipVerticleAPIManager {
 		RequestWrapper<CredentialRequestDto> requestWrapper = new RequestWrapper<>();
 		ResponseWrapper<?> responseWrapper = null;
 		CredentialResponseDto credentialResponseDto;
-		registrationStatusDto = registrationStatusService.checkPacketProcessStatus(
-				regId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.PRINT_SERVICE);
-
-		if(registrationStatusDto != null) {
 			try {
+			registrationStatusDto = registrationStatusService.getRegistrationStatus(
+					regId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PRINT_SERVICE.toString());
 				registrationStatusDto.setRegistrationStageName(getStageName());
@@ -343,11 +341,8 @@ public class CredentialRequestorStage extends MosipVerticleAPIManager {
 
 				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
 						moduleId, moduleName, regId);
-			}
-		} else {
-			object.setSkipEvent(true);
-		}
 
+		}
 		return object;
 	}
 

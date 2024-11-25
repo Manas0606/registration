@@ -810,6 +810,7 @@ public class ManualAdjudicationServiceImpl implements ManualAdjudicationService 
 		String moduleId = PlatformSuccessMessages.RPR_MANUAL_VERIFICATION_SENT.getCode();
 		String registrationId = object.getRid();
 		boolean isTransactionSuccessful = false;
+		try {
 		object.setInternalError(false);
 		object.setIsValid(false);
 		object.setMessageBusAddress(MessageBusAddress.MANUAL_ADJUDICATION_BUS_IN);
@@ -822,10 +823,8 @@ public class ManualAdjudicationServiceImpl implements ManualAdjudicationService 
 				object.getRid(), "ManualVerificationServiceImpl::process()::entry");
 
 		registrationStatusDto = registrationStatusService
-				.checkPacketProcessStatus(object.getRid(), object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId(), RegistrationTransactionTypeCode.MANUAL_ADJUDICATION);
+					.getRegistrationStatus(object.getRid(), object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 
-		if(registrationStatusDto != null) {
-			try {
 				pushRequestToQueue(object, queue);
 				isTransactionSuccessful=true;
 				registrationStatusDto.setStatusComment(StatusUtil.RPR_MANUAL_VERIFICATION_SENT_TO_QUEUE.getMessage());
@@ -896,10 +895,6 @@ public class ManualAdjudicationServiceImpl implements ManualAdjudicationService 
 						moduleId, moduleName, registrationId);
 
 			}
-		} else {
-			object.setSkipEvent(true);
-		}
-
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 				object.getRid(), "ManualVerificationServiceImpl::process()::exit");
 
