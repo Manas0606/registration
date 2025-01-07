@@ -385,7 +385,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-01-17T06:29:01.940Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.DOCUMENT)).thenReturn(documentObj);
 
@@ -402,7 +402,7 @@ public class UinGeneratorStageTest {
 
 		when(registrationStatusMapperUtil
 				.getStatusCode(RegistrationExceptionTypeCode.IDREPO_DRAFT_EXCEPTION)).thenReturn("FAILED");
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenThrow(IdrepoDraftException.class);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenThrow(IdrepoDraftException.class);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.DOCUMENT)).thenReturn(documentObj);
 
@@ -441,7 +441,7 @@ public class UinGeneratorStageTest {
 
 		when(registrationStatusMapperUtil
 				.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION)).thenReturn("REPROCESS");
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenThrow(apisResourceAccessException);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenThrow(apisResourceAccessException);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.DOCUMENT)).thenReturn(documentObj);
 
@@ -481,13 +481,13 @@ public class UinGeneratorStageTest {
 		when(packetManagerService.getFieldByMappingJsonKey(anyString(),anyString(),any(),any())).thenReturn("0.1");
 		when(packetManagerService.getFields(any(), any(), any(), any())).thenReturn(fieldMap);
 		when(idSchemaUtil.getDefaultFields(anyDouble())).thenReturn(defaultFields);
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 
 		when(idSchemaUtil.getDefaultFields(anyDouble())).thenReturn(defaultFields);
 
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(idResponseDTO);
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 
 		String idJsonData = "{\"identity\":{\"IDSchemaVersion\":1.0,\"UIN\":4215839851}}";
 
@@ -532,7 +532,7 @@ public class UinGeneratorStageTest {
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(idResponseDTO);
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		MessageDTO result = uinGeneratorStage.process(messageDTO);
 		assertFalse(result.getIsValid());
 		assertFalse(result.getInternalError());
@@ -583,7 +583,7 @@ public class UinGeneratorStageTest {
 
 		String idJsonData = "{\"identity\":{\"IDSchemaVersion\":1.0,\"UIN\":\"4215839851\"}}";
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
 				.thenReturn(idResponseDTO1);
 		MessageDTO result = uinGeneratorStage.process(messageDTO);
@@ -640,7 +640,7 @@ public class UinGeneratorStageTest {
 
 		String idJsonData = "{\"identity\":{\"IDSchemaVersion\":1.0,\"UIN\":\"4215839851\"}}";;
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
 				.thenReturn(idResponseDTO1);
 		MessageDTO result = uinGeneratorStage.process(messageDTO);
@@ -686,7 +686,7 @@ public class UinGeneratorStageTest {
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(idResponseDTO);
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO1);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO1);
 		MessageDTO result = uinGeneratorStage.process(messageDTO);
 		assertFalse(result.getIsValid());
 		assertFalse(result.getInternalError());
@@ -741,7 +741,7 @@ public class UinGeneratorStageTest {
 		.thenReturn(idResponseDTO);
 		String idJsonData = "{\"identity\":{\"IDSchemaVersion\":1.0,\"UIN\":\"4215839851\"}}";
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
 				.thenReturn(idResponseDTO1);
 
@@ -788,7 +788,7 @@ public class UinGeneratorStageTest {
 		defaultFields.add("gender");
 		defaultFields.add("UIN");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(packetManagerService.getFields(any(), any(), any(), any())).thenReturn(fieldMap);
 		
 		when(packetManagerService.getFieldByMappingJsonKey(anyString(),anyString(),any(),any())).thenReturn("0.1");
@@ -855,7 +855,7 @@ public class UinGeneratorStageTest {
 
 		String idJsonData = "{\"identity\":{\"IDSchemaVersion\":1.0,\"UIN\":4215839851}}";
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
 				.thenReturn(idResponseDTO1);
 		MessageDTO result = uinGeneratorStage.process(messageDTO);
@@ -911,7 +911,7 @@ public class UinGeneratorStageTest {
 
 		String idJsonData = "{\"identity\":{\"IDSchemaVersion\":1.0,\"UIN\":4215839851}}";
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
 				.thenReturn(idResponseDTO1);
 		Mockito.when(registrationStatusMapperUtil
@@ -1009,7 +1009,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(responsedto);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
@@ -1098,7 +1098,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(responsedto);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
@@ -1145,7 +1145,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(responsedto);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
@@ -1193,7 +1193,7 @@ public class UinGeneratorStageTest {
 		defaultFields.add("gender");
 		defaultFields.add("UIN");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		
 		when(packetManagerService.getFieldByMappingJsonKey(anyString(),anyString(),any(),any())).thenReturn("0.1");
 		when(packetManagerService.getFields(any(), any(), any(), any())).thenReturn(fieldMap);
@@ -1257,7 +1257,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(idResponseDTO);
 
@@ -1283,7 +1283,7 @@ public class UinGeneratorStageTest {
 		messageDTO.setRid("10031100110005020190313110030");
 		messageDTO.setReg_type(RegistrationType.valueOf("DEACTIVATED").name());
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenThrow(apisResourceAccessException);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenThrow(apisResourceAccessException);
 		Mockito.when(registrationStatusMapperUtil
 				.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION)).thenReturn("REPROCESS");
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
@@ -1306,7 +1306,7 @@ public class UinGeneratorStageTest {
 		messageDTO.setRid("27847657360002520181210094052");
 		messageDTO.setReg_type(RegistrationType.valueOf("ACTIVATED").name());
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenThrow(apisResourceAccessException);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenThrow(apisResourceAccessException);
 		Mockito.when(registrationStatusMapperUtil
 				.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION)).thenReturn("REPROCESS");
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
@@ -1329,7 +1329,7 @@ public class UinGeneratorStageTest {
 		messageDTO.setReg_type(RegistrationType.valueOf("ACTIVATED").name());
 		String idJsonData = "{\"identity\":{\"IDSchemaVersion\":1.0,\"UIN\":\"4215839851\"}}";
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenThrow(apisResourceAccessException);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenThrow(apisResourceAccessException);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.DOCUMENT)).thenReturn(documentObj);
 		
@@ -1351,7 +1351,7 @@ public class UinGeneratorStageTest {
 		HttpClientErrorException httpClientErrorException = new HttpClientErrorException(
 				HttpStatus.INTERNAL_SERVER_ERROR, "KER-FSE-004:encrypted data is corrupted or not base64 encoded");
 		when(apisResourceAccessException.getCause()).thenReturn(httpClientErrorException);
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenThrow(apisResourceAccessException);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenThrow(apisResourceAccessException);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.DOCUMENT)).thenReturn(documentObj);
 
@@ -1375,7 +1375,7 @@ public class UinGeneratorStageTest {
 				HttpStatus.INTERNAL_SERVER_ERROR, "KER-FSE-004:encrypted data is corrupted or not base64 encoded");
 		when(apisResourceAccessException.getCause()).thenReturn(httpServerErrorException);
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenThrow(apisResourceAccessException);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenThrow(apisResourceAccessException);
 		Mockito.when(registrationStatusMapperUtil
 				.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION)).thenReturn("REPROCESS");
 		messageDTO.setReg_type(RegistrationType.NEW.name());
@@ -1401,7 +1401,7 @@ public class UinGeneratorStageTest {
 		messageDTO.setRid("10031100110005020190313110030");
 		messageDTO.setReg_type(RegistrationType.valueOf("DEACTIVATED").name());
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenThrow(apisResourceAccessException);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenThrow(apisResourceAccessException);
 		Mockito.when(registrationStatusMapperUtil
 				.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION)).thenReturn("REPROCESS");
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
@@ -1451,7 +1451,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(responsedto);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
@@ -1480,7 +1480,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-01-17T06:29:01.940Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.postApi(any(), any(), any(), any(), any()))
 				.thenReturn(idResponseDTO);
 		Mockito.when(registrationStatusMapperUtil
@@ -1528,7 +1528,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-01-17T06:29:01.940Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.postApi(any(), any(), any(), any(), any(Class.class)))
 				.thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any(Class.class)))
@@ -1582,7 +1582,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setVersion("1.0");
 		when(packetManagerService.getField(any(), any(), any(),any())).thenReturn("989879234");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.postApi(any(), any(), any(), any(), any(Class.class)))
 				.thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any(Class.class)))
@@ -1632,7 +1632,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(responsedto);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
@@ -1667,7 +1667,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-01-17T06:29:01.940Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.postApi(any(), any(), any(), any(), any(Class.class)))
 				.thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any(Class.class)))
@@ -1702,7 +1702,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-01-17T06:29:01.940Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.postApi(any(), any(), any(), any(), any(Class.class)))
 				.thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any(Class.class)))
@@ -1753,7 +1753,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(idResponseDTO);
 
@@ -1806,7 +1806,7 @@ public class UinGeneratorStageTest {
 		errorDTO.setErrorCode("ERROR");
 		errorDTO.setMessage("ERROR message");
 		responsedto.setErrors(Lists.newArrayList(errorDTO));
-		when(idrepoDraftService.idrepoUpdateDraft(any(), any(), any()))
+		when(idrepoDraftService.idrepoUpdateDraft(any(), any(), any(), System.currentTimeMillis()))
 				.thenReturn(responsedto);
 
 		IdResponseDTO idResponseDTO1 = new IdResponseDTO();
@@ -1859,7 +1859,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-01-17T06:29:01.940Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 
 		MessageDTO result = uinGeneratorStage.process(messageDTO);
 		assertTrue(result.getIsValid());
@@ -1895,7 +1895,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setVersion("1.0");
 
 		when(packetManagerService.getFields(any(), any(), any(), any())).thenReturn(fieldMap);
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 
 		String str = "{\"id\":\"mosip.id.read\",\"version\":\"1.0\",\"responsetime\":\"2019-04-05\",\"metadata\":null,\"response\":{\"uin\":\"2812936908\"},\"errors\":[{\"errorCode\":null,\"errorMessage\":null}]}";
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(),
@@ -1972,7 +1972,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO1.setResponsetime("2019-01-17T06:29:01.940Z");
 		idResponseDTO1.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(idResponseDTO);
 
@@ -2029,7 +2029,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(responsedto);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
@@ -2079,7 +2079,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		ApisResourceAccessException ex=new ApisResourceAccessException("", new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenThrow(ex);
@@ -2128,7 +2128,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		ApisResourceAccessException ex=new ApisResourceAccessException("", new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenThrow(ex);
@@ -2177,7 +2177,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		ApisResourceAccessException ex=new ApisResourceAccessException("");
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenThrow(ex);
@@ -2230,7 +2230,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(responsedto);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
@@ -2279,7 +2279,7 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-03-12T06:49:30.779Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(registrationProcessorRestClientService.getApi(any(), any(), anyString(), any(), any()))
 				.thenReturn(responsedto);
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
@@ -2339,7 +2339,7 @@ public class UinGeneratorStageTest {
 
 		Mockito.when(registrationStatusMapperUtil
 				.getStatusCode(RegistrationExceptionTypeCode.PACKET_UIN_GENERATION_REPROCESS)).thenReturn("REPROCESS");
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 
 		MessageDTO messageDTO = new MessageDTO();
 		messageDTO.setRid("27847657360002520181210094052");
@@ -2385,7 +2385,7 @@ public class UinGeneratorStageTest {
 
 		Mockito.when(registrationStatusMapperUtil
 				.getStatusCode(RegistrationExceptionTypeCode.PACKET_UIN_GENERATION_REPROCESS)).thenReturn("REPROCESS");
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 
 		MessageDTO messageDTO = new MessageDTO();
 		messageDTO.setRid("27847657360002520181210094052");
@@ -2424,7 +2424,7 @@ public class UinGeneratorStageTest {
 		when(registrationStatusMapperUtil
 				.getStatusCode(RegistrationExceptionTypeCode.IDREPO_DRAFT_REPROCESSABLE_EXCEPTION))
 				.thenReturn("REPROCESS");
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any()))
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis()))
 				.thenThrow(IdrepoDraftReprocessableException.class);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.DOCUMENT)).thenReturn(documentObj);
@@ -2461,12 +2461,12 @@ public class UinGeneratorStageTest {
 		idResponseDTO.setResponsetime("2019-01-17T06:29:01.940Z");
 		idResponseDTO.setVersion("1.0");
 
-		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any())).thenReturn(idResponseDTO);
+		when(idrepoDraftService.idrepoUpdateDraft(anyString(), any(), any(), System.currentTimeMillis())).thenReturn(idResponseDTO);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY)).thenReturn(identityObj);
 		when(utility.getRegistrationProcessorMappingJson(MappingJsonConstants.DOCUMENT)).thenReturn(documentObj);
 
 		MessageDTO result = uinGeneratorStage.process(messageDTO);
-		verify(idrepoDraftService).idrepoUpdateDraft(any(), any(), argumentCaptor.capture());
+		verify(idrepoDraftService).idrepoUpdateDraft(any(), any(), argumentCaptor.capture(), System.currentTimeMillis());
 		ObjectMapper objectMapper = new ObjectMapper();
 		String jsonobject=objectMapper.writeValueAsString(argumentCaptor.getAllValues().get(0).getRequest().getIdentity());
 		JsonNode jsonNode=objectMapper.readTree(jsonobject);
