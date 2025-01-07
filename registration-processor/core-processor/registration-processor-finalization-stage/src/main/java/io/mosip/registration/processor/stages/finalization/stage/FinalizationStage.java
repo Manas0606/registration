@@ -130,6 +130,7 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 		boolean isTransactionSuccessful = Boolean.FALSE;
 		object.setMessageBusAddress(MessageBusAddress.FINALIZATION_BUS_IN);
 		object.setInternalError(Boolean.FALSE);
+		Long startTime = System.currentTimeMillis();
 		object.setIsValid(Boolean.FALSE);
 		LogDescription description = new LogDescription();
 		String registrationId = object.getRid();
@@ -137,14 +138,22 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 				registrationId, "FinalizationStage::process()::entry");
 			try {
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 		 registrationStatusDto = registrationStatusService.getRegistrationStatus(
 				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.FINALIZATION.toString());
 				registrationStatusDto.setRegistrationStageName(getStageName());
 
 
 				if(!idrepoDraftService.idrepoHasDraft(registrationStatusDto.getRegistrationId())) {
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "Draft Record Not Found in IDREPO RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
 					registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
 					registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
 							.getStatusCode(RegistrationExceptionTypeCode.DRAFT_REQUEST_UNAVAILABLE));
@@ -165,6 +174,9 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 				}
 				else {
 					IdResponseDTO idResponseDTO=idrepoDraftService.idrepoPublishDraft(registrationStatusDto.getRegistrationId());
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "Publish Draft Completed for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
 					if(idResponseDTO != null && idResponseDTO.getResponse() != null) {
 						registrationStatusDto.setStatusComment(StatusUtil.FINALIZATION_SUCCESS.getMessage());
 						registrationStatusDto.setSubStatusCode(StatusUtil.FINALIZATION_SUCCESS.getCode());
@@ -258,6 +270,8 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 						: description.getCode();
 				String moduleName = ModuleName.BIOMETRIC_EXTRACTION.toString();
 				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, "Updating Registration Status for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 				String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
 				String eventName = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventName.UPDATE.toString()
 						: EventName.EXCEPTION.toString();
@@ -266,6 +280,8 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 
 				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
 						moduleId, moduleName, registrationId);
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, "Creating Audit Record for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 			}
 

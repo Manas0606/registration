@@ -218,6 +218,7 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 		boolean isTransactionSuccessful = Boolean.FALSE;
 		object.setMessageBusAddress(MessageBusAddress.UIN_GENERATION_BUS_IN);
 		object.setInternalError(Boolean.FALSE);
+		Long startTime = System.currentTimeMillis();
 		object.setIsValid(Boolean.TRUE);
 		LogDescription description = new LogDescription();
 		String registrationId = object.getRid();
@@ -225,9 +226,15 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 				registrationId, "UinGeneratorStage::process()::entry");
 		UinGenResponseDto uinResponseDto = null;
 
+		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+				registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
 		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(
 				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
-			try {
+		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+				registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
+		try {
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.UIN_GENERATOR.toString());
 				registrationStatusDto.setRegistrationStageName(getStageName());
@@ -245,22 +252,33 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 
 					IdResponseDTO idResponseDTO = new IdResponseDTO();
 					String schemaVersion = packetManagerService.getFieldByMappingJsonKey(registrationId, MappingJsonConstants.IDSCHEMA_VERSION, registrationStatusDto.getRegistrationType(), ProviderStageName.UIN_GENERATOR);
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "getFieldByMappingJsonKey Complete for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 					Map<String, String> fieldMap = packetManagerService.getFields(registrationId,
 							idSchemaUtil.getDefaultFields(Double.valueOf(schemaVersion)), registrationStatusDto.getRegistrationType(), ProviderStageName.UIN_GENERATOR);
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "getFields from Packet Manager Complete for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
 					String uinField = fieldMap.get(utility.getMappingJsonValue(MappingJsonConstants.UIN, MappingJsonConstants.IDENTITY));
 
 					JSONObject demographicIdentity = new JSONObject();
 					demographicIdentity.put(MappingJsonConstants.IDSCHEMA_VERSION, convertIdschemaToDouble ? Double.valueOf(schemaVersion) : schemaVersion);
 
 					loadDemographicIdentity(fieldMap, demographicIdentity);
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "loadDemographicIdentity() Complete for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 					if (StringUtils.isEmpty(uinField) || uinField.equalsIgnoreCase("null") ) {
 
 						idResponseDTO = sendIdRepoWithUin(registrationId, registrationStatusDto.getRegistrationType(), demographicIdentity,
 								uinField);
+						regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+								registrationId, "sendIdRepoWithUin() Complete for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 						boolean isUinAlreadyPresent = isUinAlreadyPresent(idResponseDTO, registrationId);
+						regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+								registrationId, "isUinAlreadyPresent() Complete for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 						if (isIdResponseNotNull(idResponseDTO) || isUinAlreadyPresent) {
 							registrationStatusDto.setStatusComment(StatusUtil.UIN_GENERATED_SUCCESS.getMessage());
@@ -448,8 +466,14 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 						? PlatformSuccessMessages.RPR_UIN_GENERATOR_STAGE_SUCCESS.getCode()
 						: description.getCode();
 				String moduleName = ModuleName.UIN_GENERATOR.toString();
-				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
-				String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					registrationId, "Before updateRegistrationStatus() for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
+			registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					registrationId, "updateRegistrationStatus() complete for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
+			String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
 				String eventName = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventName.UPDATE.toString()
 						: EventName.EXCEPTION.toString();
 				String eventType = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventType.BUSINESS.toString()
@@ -457,8 +481,10 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 
 				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
 						moduleId, moduleName, registrationId);
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					registrationId, "Creating Audit Record for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
-			}
+		}
 
 		return object;
 	}
