@@ -173,7 +173,7 @@ public class IdrepoDraftServiceTest {
         when(registrationProcessorRestClientService.patchApi(
                 any(), any(), any(), any(), any(), any())).thenReturn(idResponseDTO);
 
-        IdResponseDTO result = idrepoDraftService.idrepoUpdateDraft(ID, null, idRequestDto);
+        IdResponseDTO result = idrepoDraftService.idrepoUpdateDraft(ID, null, idRequestDto, System.currentTimeMillis());
 
         assertTrue(result.getResponse().getRegistrationId().equals(ID));
     }
@@ -199,7 +199,7 @@ public class IdrepoDraftServiceTest {
         when(registrationProcessorRestClientService.patchApi(
                 any(), any(), any(), any(), any(), any())).thenReturn(idResponseDTO1);
 
-        idrepoDraftService.idrepoUpdateDraft(ID, null, idRequestDto);
+        idrepoDraftService.idrepoUpdateDraft(ID, null, idRequestDto, System.currentTimeMillis());
 
     }
 
@@ -224,7 +224,7 @@ public class IdrepoDraftServiceTest {
 		when(registrationProcessorRestClientService.patchApi(any(), any(), any(), any(), any(), any()))
 				.thenReturn(idResponseDTO1);
 
-		idrepoDraftService.idrepoUpdateDraft(ID, null, idRequestDto);
+		idrepoDraftService.idrepoUpdateDraft(ID, null, idRequestDto, System.currentTimeMillis());
 
 	}
 
