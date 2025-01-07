@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.mosip.registration.processor.core.constant.LoggerFileConstant;
 import org.assertj.core.util.Lists;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,12 +79,15 @@ public class IdrepoDraftService {
         return  (response.getErrors() == null || response.getErrors().isEmpty());
     }
 
-	public IdResponseDTO idrepoUpdateDraft(String id, String uin, IdRequestDto idRequestDto)
+	public IdResponseDTO idrepoUpdateDraft(String id, String uin, IdRequestDto idRequestDto, Long startTime)
 			throws ApisResourceAccessException, IdrepoDraftException, IOException, IdrepoDraftReprocessableException {
         regProcLogger.debug("idrepoUpdateDraft entry " + id);
         if (!idrepoHasDraft(id)) {
             regProcLogger.info("Existing draft not found for id " + id + ". Creating new draft.");
             idrepoCreateDraft(id, uin);
+            regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+                    id, "After Calling idrepoCreateDraft method Complete for Registration RID : " + id + " " + (System.currentTimeMillis() - startTime) + " ms");
+
         } else {
             regProcLogger.info("Existing draft found for id " + id + ". Updating uin in demographic identity.");
             ResponseDTO responseDTO = idrepoGetDraft(id);
@@ -103,6 +107,9 @@ public class IdrepoDraftService {
 
         IdResponseDTO response = (IdResponseDTO) registrationProcessorRestClientService.patchApi(
                 ApiName.IDREPOUPDATEDRAFT, Lists.newArrayList(id), null, null, idRequestDto, IdResponseDTO.class);
+        regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+                id, "After Calling UIN Draft Update method Complete for Registration RID : " + id + " " + (System.currentTimeMillis() - startTime) + " ms");
+
         if (response.getErrors() != null && !response.getErrors().isEmpty()) {
 			ErrorDTO error = response.getErrors().get(0);
 			regProcLogger.error("Error occured while updating draft for id : " + id, error.toString());

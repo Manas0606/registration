@@ -272,7 +272,7 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 					if (StringUtils.isEmpty(uinField) || uinField.equalsIgnoreCase("null") ) {
 
 						idResponseDTO = sendIdRepoWithUin(registrationId, registrationStatusDto.getRegistrationType(), demographicIdentity,
-								uinField);
+								uinField, startTime);
 						regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 								registrationId, "sendIdRepoWithUin() Complete for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
@@ -535,10 +535,13 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 	 * @throws io.mosip.kernel.core.exception.IOException
 	 * @throws Exception
 	 */
-	private IdResponseDTO sendIdRepoWithUin(String id, String process, JSONObject demographicIdentity, String uin)
+	private IdResponseDTO sendIdRepoWithUin(String id, String process, JSONObject demographicIdentity, String uin, Long startTime)
 			throws Exception {
 
 		List<Documents> documentInfo = getAllDocumentsByRegId(id, process, demographicIdentity);
+		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+				id, "getAllDocumentsByRegId() Complete for Registration RID : " + id + " " + (System.currentTimeMillis() - startTime) + " ms");
+
 		RequestDto requestDto = new RequestDto();
 		requestDto.setIdentity(demographicIdentity);
 		requestDto.setDocuments(documentInfo);
@@ -555,8 +558,12 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 		idRequestDTO.setMetadata(null);
 
 		try {
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					id, "Before Calling idrepoUpdateDraft Complete for Registration RID : " + id + " " + (System.currentTimeMillis() - startTime) + " ms");
 
-			result = idrepoDraftService.idrepoUpdateDraft(id, null, idRequestDTO);
+			result = idrepoDraftService.idrepoUpdateDraft(id, null, idRequestDTO, startTime);
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					id, "After Calling idrepoUpdateDraft Complete for Registration RID : " + id + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 		} catch (ApisResourceAccessException e) {
 			regProcLogger.error("Execption occured updating draft for id " + id, e);
@@ -724,7 +731,7 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 		idRequestDTO.setVersion(UINConstants.idRepoApiVersion);
 
 		try {
-		idResponseDto = idrepoDraftService.idrepoUpdateDraft(id, uin, idRequestDTO);
+		idResponseDto = idrepoDraftService.idrepoUpdateDraft(id, uin, idRequestDTO, System.currentTimeMillis());
 		} catch (ApisResourceAccessException e) {
 			regProcLogger.error("Execption occured updating draft for id " + id, e);
 			if (e.getCause() instanceof HttpClientErrorException) {
@@ -791,7 +798,7 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 				idRequestDTO.setRequesttime(DateUtils.getUTCCurrentDateTimeString());
 				idRequestDTO.setVersion(UINConstants.idRepoApiVersion);
 
-				result = idrepoDraftService.idrepoUpdateDraft(id, uin, idRequestDTO);
+				result = idrepoDraftService.idrepoUpdateDraft(id, uin, idRequestDTO, System.currentTimeMillis());
 
 				if (isIdResponseNotNull(result)) {
 
@@ -920,7 +927,7 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 			idRequestDTO.setRequesttime(DateUtils.getUTCCurrentDateTimeString());
 			idRequestDTO.setVersion(UINConstants.idRepoApiVersion);
 
-			idResponseDto = idrepoDraftService.idrepoUpdateDraft(id, uin, idRequestDTO);
+			idResponseDto = idrepoDraftService.idrepoUpdateDraft(id, uin, idRequestDTO, System.currentTimeMillis());
 
 			if (isIdResponseNotNull(idResponseDto)) {
 				if (idResponseDto.getResponse().getStatus().equalsIgnoreCase(RegistrationType.DEACTIVATED.toString())) {
@@ -1081,7 +1088,7 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 			idRequestDTO.setRequesttime(DateUtils.getUTCCurrentDateTimeString());
 			idRequestDTO.setVersion(UINConstants.idRepoApiVersion);
 
-			idResponse = idrepoDraftService.idrepoUpdateDraft(lostPacketRegId, uin, idRequestDTO);
+			idResponse = idrepoDraftService.idrepoUpdateDraft(lostPacketRegId, uin, idRequestDTO, System.currentTimeMillis());
 
 			if (isIdResponseNotNull(idResponse)) {
 				description.setStatusCode(RegistrationStatusCode.PROCESSED.toString());
