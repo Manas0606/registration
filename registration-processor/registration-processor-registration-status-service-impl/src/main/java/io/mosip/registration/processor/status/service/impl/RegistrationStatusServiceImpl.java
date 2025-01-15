@@ -880,6 +880,16 @@ public class RegistrationStatusServiceImpl
 		}
 	}
 
+	@Override
+	public boolean checkRegistrationTransactionExist(String rid, String trnTypeCode, List<String> statusCodes) {
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "",
+				"RegistrationStatusServiceImpl::checkRegistrationTransactionExist()::entry");
+		boolean isExist = transcationStatusService.isTransactionExist(rid, trnTypeCode, statusCodes);
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "",
+				"RegistrationStatusServiceImpl::checkRegistrationTransactionExist()::exit");
+		return isExist;
+	}
+
 	private RegistrationStatusEntity convertDtoToEntityForWorkFlow(InternalRegistrationStatusDto dto) {
 		BaseRegistrationPKEntity pk = new BaseRegistrationPKEntity();
 		pk.setWorkflowInstanceId(dto.getWorkflowInstanceId());

@@ -164,4 +164,5 @@ public interface RegistrationStatusService<T, U, D> {
 
 	public List<InternalRegistrationStatusDto> getResumablePackets(Integer fetchSize);
 
+	public boolean checkRegistrationTransactionExist(String rid, String trnTypeCode, List<String> statusCodes);
 }

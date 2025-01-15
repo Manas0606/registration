@@ -129,6 +129,16 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 		return dtoList;
 	}
 
+	@Override
+	public boolean isTransactionExist(String regId, String trnTypeCode, List<String> statusCode) {
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
+				"TransactionServiceImpl::isTransactionExist()::entry");
+		boolean isExist =  transactionRepositary.existsByRegIdAndTrnTypeCodeAndStatusCode(regId, trnTypeCode, statusCode);
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
+				"TransactionServiceImpl::isTransactionExist()::exist");
+		return isExist;
+	}
+
 	/**
 	 * Convert entity to dto.
 	 *

@@ -40,6 +40,9 @@ import io.mosip.registration.processor.status.dto.InternalRegistrationStatusDto;
 import io.mosip.registration.processor.status.dto.RegistrationStatusDto;
 import io.mosip.registration.processor.status.service.RegistrationStatusService;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RefreshScope
 @Service
 @Configuration
@@ -128,6 +131,7 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 	@Override
 	public MessageDTO process(MessageDTO object) {
 		boolean isTransactionSuccessful = Boolean.FALSE;
+		boolean isTransactionSkipped = Boolean.FALSE;
 		object.setMessageBusAddress(MessageBusAddress.FINALIZATION_BUS_IN);
 		object.setInternalError(Boolean.FALSE);
 		Long startTime = System.currentTimeMillis();
@@ -138,60 +142,69 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 				registrationId, "FinalizationStage::process()::entry");
 			try {
-				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
-		 registrationStatusDto = registrationStatusService.getRegistrationStatus(
-				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
-				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
-
-				registrationStatusDto
-						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.FINALIZATION.toString());
-				registrationStatusDto.setRegistrationStageName(getStageName());
-
-
-				if(!idrepoDraftService.idrepoHasDraft(registrationStatusDto.getRegistrationId())) {
+				List<String> statusCodes = new ArrayList<>();
+				statusCodes.add(RegistrationTransactionStatusCode.PROCESSED.toString());
+				statusCodes.add(RegistrationTransactionStatusCode.SUCCESS.toString());
+				if(!registrationStatusService.checkRegistrationTransactionExist(registrationId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes)) {
 					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-							registrationId, "Draft Record Not Found in IDREPO RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
-
-					registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
-					registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
-							.getStatusCode(RegistrationExceptionTypeCode.DRAFT_REQUEST_UNAVAILABLE));
-					description.setTransactionStatusCode(registrationStatusMapperUtil
-							.getStatusCode(RegistrationExceptionTypeCode.DRAFT_REQUEST_UNAVAILABLE));
-					registrationStatusDto.setStatusComment(trimExceptionMessage
-							.trimExceptionMessage(StatusUtil.FINALIZATION_DRAFT_REQUEST_UNAVAILABLE.getMessage()));
-					object.setInternalError(Boolean.TRUE);
-					isTransactionSuccessful = false;
-					description.setMessage(PlatformErrorMessages.RPR_FINALIZATION_STAGE_DRAFT_REQUEST_UNAVAILABLE.getMessage());
-					description.setCode(PlatformErrorMessages.RPR_FINALIZATION_STAGE_DRAFT_REQUEST_UNAVAILABLE.getCode());
-					description.setSubStatusCode(StatusUtil.FINALIZATION_DRAFT_REQUEST_UNAVAILABLE.getCode());
-
-					regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-							LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
-							StatusUtil.FINALIZATION_DRAFT_REQUEST_UNAVAILABLE.getMessage());
-					object.setIsValid(Boolean.FALSE);
-				}
-				else {
-					IdResponseDTO idResponseDTO=idrepoDraftService.idrepoPublishDraft(registrationStatusDto.getRegistrationId());
+							registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+					registrationStatusDto = registrationStatusService.getRegistrationStatus(
+							registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-							registrationId, "Publish Draft Completed for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+							registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
-					if(idResponseDTO != null && idResponseDTO.getResponse() != null) {
-						registrationStatusDto.setStatusComment(StatusUtil.FINALIZATION_SUCCESS.getMessage());
-						registrationStatusDto.setSubStatusCode(StatusUtil.FINALIZATION_SUCCESS.getCode());
-						isTransactionSuccessful = true;
-						object.setIsValid(Boolean.TRUE);
-						registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.toString());
-						description.setMessage(PlatformSuccessMessages.RPR_FINALIZATION_SUCCESS.getMessage());
-						description.setCode(PlatformSuccessMessages.RPR_FINALIZATION_SUCCESS.getCode());
-						description.setTransactionStatusCode(RegistrationTransactionStatusCode.SUCCESS.toString());
+					registrationStatusDto
+							.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.FINALIZATION.toString());
+					registrationStatusDto.setRegistrationStageName(getStageName());
+
+
+					if(!idrepoDraftService.idrepoHasDraft(registrationStatusDto.getRegistrationId())) {
+						regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+								registrationId, "Draft Record Not Found in IDREPO RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
+						registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
+						registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
+								.getStatusCode(RegistrationExceptionTypeCode.DRAFT_REQUEST_UNAVAILABLE));
+						description.setTransactionStatusCode(registrationStatusMapperUtil
+								.getStatusCode(RegistrationExceptionTypeCode.DRAFT_REQUEST_UNAVAILABLE));
+						registrationStatusDto.setStatusComment(trimExceptionMessage
+								.trimExceptionMessage(StatusUtil.FINALIZATION_DRAFT_REQUEST_UNAVAILABLE.getMessage()));
+						object.setInternalError(Boolean.TRUE);
+						isTransactionSuccessful = false;
+						description.setMessage(PlatformErrorMessages.RPR_FINALIZATION_STAGE_DRAFT_REQUEST_UNAVAILABLE.getMessage());
+						description.setCode(PlatformErrorMessages.RPR_FINALIZATION_STAGE_DRAFT_REQUEST_UNAVAILABLE.getCode());
+						description.setSubStatusCode(StatusUtil.FINALIZATION_DRAFT_REQUEST_UNAVAILABLE.getCode());
+
+						regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+								LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
+								StatusUtil.FINALIZATION_DRAFT_REQUEST_UNAVAILABLE.getMessage());
+						object.setIsValid(Boolean.FALSE);
 					}
-				}
+					else {
+						IdResponseDTO idResponseDTO=idrepoDraftService.idrepoPublishDraft(registrationStatusDto.getRegistrationId());
+						regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+								registrationId, "Publish Draft Completed for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
-				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						registrationId, description.getMessage());
-				registrationStatusDto.setUpdatedBy(USER);
+						if(idResponseDTO != null && idResponseDTO.getResponse() != null) {
+							registrationStatusDto.setStatusComment(StatusUtil.FINALIZATION_SUCCESS.getMessage());
+							registrationStatusDto.setSubStatusCode(StatusUtil.FINALIZATION_SUCCESS.getCode());
+							isTransactionSuccessful = true;
+							object.setIsValid(Boolean.TRUE);
+							registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.toString());
+							description.setMessage(PlatformSuccessMessages.RPR_FINALIZATION_SUCCESS.getMessage());
+							description.setCode(PlatformSuccessMessages.RPR_FINALIZATION_SUCCESS.getCode());
+							description.setTransactionStatusCode(RegistrationTransactionStatusCode.SUCCESS.toString());
+						}
+					}
+
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, description.getMessage());
+					registrationStatusDto.setUpdatedBy(USER);
+				} else {
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "Transaction already completed for Finalization Stage. Ignore process for RID : " + registrationId);
+					isTransactionSkipped = Boolean.TRUE;
+				}
 			} catch (ApisResourceAccessException ex) {
 				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
 				registrationStatusDto.setStatusComment(trimExceptionMessage
@@ -253,36 +266,39 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 				description.setCode(PlatformErrorMessages.RPR_SYS_UNEXCEPTED_EXCEPTION.getCode());
 			}
 			finally {
-				if (description.getStatusComment() != null)
-					registrationStatusDto.setStatusComment(description.getStatusComment());
-				if (description.getStatusCode() != null)
-					registrationStatusDto.setStatusCode(description.getStatusCode());
-				if (description.getSubStatusCode() != null)
-					registrationStatusDto.setSubStatusCode(description.getSubStatusCode());
-				if (description.getTransactionStatusCode() != null)
-					registrationStatusDto.setLatestTransactionStatusCode(description.getTransactionStatusCode());
+				if(isTransactionSkipped) {
+					object = null;
+				} else {
+					if (description.getStatusComment() != null)
+						registrationStatusDto.setStatusComment(description.getStatusComment());
+					if (description.getStatusCode() != null)
+						registrationStatusDto.setStatusCode(description.getStatusCode());
+					if (description.getSubStatusCode() != null)
+						registrationStatusDto.setSubStatusCode(description.getSubStatusCode());
+					if (description.getTransactionStatusCode() != null)
+						registrationStatusDto.setLatestTransactionStatusCode(description.getTransactionStatusCode());
 
-				if (object.getInternalError()) {
-					updateErrorFlags(registrationStatusDto, object);
+					if (object.getInternalError()) {
+						updateErrorFlags(registrationStatusDto, object);
+					}
+					String moduleId = isTransactionSuccessful
+							? PlatformSuccessMessages.RPR_BIOMETRIC_EXTRACTION_SUCCESS.getCode()
+							: description.getCode();
+					String moduleName = ModuleName.BIOMETRIC_EXTRACTION.toString();
+					registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "Updating Registration Status for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+					String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
+					String eventName = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventName.UPDATE.toString()
+							: EventName.EXCEPTION.toString();
+					String eventType = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventType.BUSINESS.toString()
+							: EventType.SYSTEM.toString();
+
+					auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
+							moduleId, moduleName, registrationId);
+					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+							registrationId, "Creating Audit Record for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 				}
-				String moduleId = isTransactionSuccessful
-						? PlatformSuccessMessages.RPR_BIOMETRIC_EXTRACTION_SUCCESS.getCode()
-						: description.getCode();
-				String moduleName = ModuleName.BIOMETRIC_EXTRACTION.toString();
-				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
-				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						registrationId, "Updating Registration Status for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
-				String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
-				String eventName = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventName.UPDATE.toString()
-						: EventName.EXCEPTION.toString();
-				String eventType = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventType.BUSINESS.toString()
-						: EventType.SYSTEM.toString();
-
-				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
-						moduleId, moduleName, registrationId);
-				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						registrationId, "Creating Audit Record for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
-
 			}
 
 		return object;
