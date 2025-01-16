@@ -21,6 +21,6 @@ public interface TransactionRepository<T extends BaseTransactionEntity, E> exten
 	public List<T> getTransactionByRegIdAndStatusCode(@Param("regId") String regId,
 			@Param("statusCode") String statusCode);
 
-	@Query(value = "SELECT EXISTS(SELECT 1 FROM registration_transaction trn WHERE trn.reg_id=:regId and trn.status_code in :statusCodes and trn.trn_type_code=:trnTypeCode)", nativeQuery = true)
-	boolean existsByRegIdAndTrnTypeCodeAndStatusCode(@Param("regId") String regId, @Param("trnTypeCode") String trnTypeCode, @Param("statusCodes") List<String> statusCode);
+	@Query(value = "SELECT EXISTS(SELECT 1 FROM registration_transaction trn WHERE trn.reg_id=:regId and trn.status_code in :statusCodes and trn.trn_type_code=:trnTypeCode and trn.transaction_flow_id = :latestTrnFlowId)", nativeQuery = true)
+	boolean existsByRegIdAndTrnTypeCodeAndStatusCode(@Param("regId") String regId, @Param("trnTypeCode") String trnTypeCode, @Param("statusCodes") List<String> statusCode, @Param("latestTrnFlowId")  String latestTrnFlowId);
 }

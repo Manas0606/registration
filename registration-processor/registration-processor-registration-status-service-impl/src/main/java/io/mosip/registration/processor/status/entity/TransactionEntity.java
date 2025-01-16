@@ -77,6 +77,10 @@ public class TransactionEntity extends BaseTransactionEntity {
 	@Column(name = "upd_dtimes")
 	private LocalDateTime updateDateTime;
 
+	/** The reference id. */
+	@Column(name = "transaction_flow_id")
+	private String transactionFlowId;
+
 	/**
 	 * Instantiates a new transaction entity.
 	 */
@@ -141,6 +145,14 @@ public class TransactionEntity extends BaseTransactionEntity {
 	 */
 	public void setParentid(String parentid) {
 		this.parentid = parentid;
+	}
+
+	public String getTransactionFlowId() {
+		return transactionFlowId;
+	}
+
+	public void setTransactionFlowId(String transactionFlowId) {
+		this.transactionFlowId = transactionFlowId;
 	}
 
 	/**

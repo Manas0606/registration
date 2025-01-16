@@ -226,18 +226,18 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 				registrationId, "UinGeneratorStage::process()::entry");
 		UinGenResponseDto uinResponseDto = null;
 
+		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+				registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
+		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(
+				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
+		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+				registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
 		List<String> statusCodes = new ArrayList<>();
 		statusCodes.add(RegistrationTransactionStatusCode.PROCESSED.toString());
 		statusCodes.add(RegistrationTransactionStatusCode.SUCCESS.toString());
-		if(!registrationStatusService.checkRegistrationTransactionExist(registrationId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes)) {
-			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
-
-			InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(
-					registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
-			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
-
+		if(!registrationStatusService.checkRegistrationTransactionExist(registrationId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes, registrationStatusDto.getLatestTransactionFlowId())) {
 			try {
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.UIN_GENERATOR.toString());
@@ -492,8 +492,7 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 		} else {
 			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 					registrationId, "Transaction already completed for UIN Generator Stage. Ignore process for RID : " + registrationId);
-			object.setInternalError(false);
-			object.setIsValid(true);
+			object=null;
 		}
 
 		return object;

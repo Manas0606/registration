@@ -40,5 +40,5 @@ public interface TransactionService<U> {
 	
 	public List<RegistrationTransactionDto> getTransactionByRegId(String regId) throws TransactionsUnavailableException, RegTransactionAppException;
 
-	public boolean isTransactionExist(String regId, String trnTypeCode, List<String> statusCode);
+	public boolean isTransactionExist(String regId, String trnTypeCode, List<String> statusCode, String latestTrnFlowId);
 }

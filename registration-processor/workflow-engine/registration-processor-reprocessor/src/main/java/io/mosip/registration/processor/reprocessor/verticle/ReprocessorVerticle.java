@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.mosip.registration.processor.status.utilities.RegistrationUtility;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -277,6 +278,7 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 								sendAndSetStatus(dto, messageDTO, stageName);
 								dto.setStatusComment(StatusUtil.RE_PROCESS_RESTART_FROM_STAGE.getMessage());
 								dto.setSubStatusCode(StatusUtil.RE_PROCESS_RESTART_FROM_STAGE.getCode());
+								dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
 								description
 										.setMessage(
 												PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_RESTART_FROM_STAGE_SUCCESS
@@ -296,6 +298,8 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 							sendAndSetStatus(dto, messageDTO, stageName);
 						dto.setStatusComment(StatusUtil.RE_PROCESS_COMPLETED.getMessage());
 						dto.setSubStatusCode(StatusUtil.RE_PROCESS_COMPLETED.getCode());
+						if(dto.getLatestTransactionFlowId() == null)
+							dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
 						description.setMessage(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getMessage());
 						description.setCode(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getCode());
 						}

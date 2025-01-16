@@ -79,6 +79,7 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 		transcationEntity.setLangCode("eng");
 		transcationEntity.setReferenceId(dto.getReferenceId());
 		transcationEntity.setReferenceIdType(dto.getReferenceIdType());
+		transcationEntity.setTransactionFlowId(dto.getTransactionFlowId());
 		return transcationEntity;
 	}
 
@@ -130,10 +131,10 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 	}
 
 	@Override
-	public boolean isTransactionExist(String regId, String trnTypeCode, List<String> statusCode) {
+	public boolean isTransactionExist(String regId, String trnTypeCode, List<String> statusCode, String latestTrnFlowId) {
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"TransactionServiceImpl::isTransactionExist()::entry");
-		boolean isExist =  transactionRepositary.existsByRegIdAndTrnTypeCodeAndStatusCode(regId, trnTypeCode, statusCode);
+		boolean isExist =  transactionRepositary.existsByRegIdAndTrnTypeCodeAndStatusCode(regId, trnTypeCode, statusCode, latestTrnFlowId);
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"TransactionServiceImpl::isTransactionExist()::exist");
 		return isExist;
@@ -149,13 +150,13 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 	private TransactionDto convertEntityToDto(TransactionEntity entity) {
 		return new TransactionDto(entity.getId(), entity.getRegistrationId(), entity.getParentid(),
 				entity.getTrntypecode(), entity.getRemarks(), entity.getStatusCode(), entity.getStatusComment(),
-				entity.getSubStatusCode());
+				entity.getSubStatusCode(), entity.getTransactionFlowId());
 
 	}
 
 	private RegistrationTransactionDto convertEntityToRegistrationTransactionDto(TransactionEntity entity) {
 		return new RegistrationTransactionDto(entity.getId(), entity.getRegistrationId(), entity.getTrntypecode(),
 				entity.getParentid(), entity.getStatusCode(), entity.getSubStatusCode(), entity.getStatusComment(),
-				entity.getCreateDateTime());
+				entity.getCreateDateTime(), entity.getTransactionFlowId());
 	}
 }

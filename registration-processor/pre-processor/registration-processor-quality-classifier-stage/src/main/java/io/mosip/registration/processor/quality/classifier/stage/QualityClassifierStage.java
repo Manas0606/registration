@@ -223,18 +223,18 @@ public class QualityClassifierStage extends MosipVerticleAPIManager {
 		object.setIsValid(Boolean.FALSE);
 		Boolean isTransactionSuccessful = Boolean.FALSE;
 
+		long startTime = System.currentTimeMillis();
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
+				"QualityCheckerStage::process()::entry");
+		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(regId,
+				object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
+		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
+				"QualityCheckerStage::Time taken to find rid info - " + (System.currentTimeMillis() - startTime) + " (ms)");
+
 		List<String> statusCodes = new ArrayList<>();
 		statusCodes.add(RegistrationTransactionStatusCode.PROCESSED.toString());
 		statusCodes.add(RegistrationTransactionStatusCode.SUCCESS.toString());
-		if(!registrationStatusService.checkRegistrationTransactionExist(regId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes)) {
-			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
-					"QualityCheckerStage::process()::entry");
-			long startTime = System.currentTimeMillis();
-			InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(regId,
-					object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
-			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
-					"QualityCheckerStage::Time taken to find rid info - " + (System.currentTimeMillis() - startTime) + " (ms)");
-
+		if(!registrationStatusService.checkRegistrationTransactionExist(regId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes, registrationStatusDto.getLatestTransactionFlowId())) {
 			try {
 				String individualBiometricsObject = basedPacketManagerService.getFieldByMappingJsonKey(regId,
 						MappingJsonConstants.INDIVIDUAL_BIOMETRICS, registrationStatusDto.getRegistrationType(),
@@ -408,8 +408,7 @@ public class QualityClassifierStage extends MosipVerticleAPIManager {
 		}  else {
 			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 					regId, "Transaction already completed for Quality Classifier Stage. Ignore process for RID : " + regId);
-			object.setInternalError(false);
-			object.setIsValid(true);
+			object=null;
 		}
 
 		return object;

@@ -142,17 +142,17 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 				registrationId, "FinalizationStage::process()::entry");
 			try {
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+				registrationStatusDto = registrationStatusService.getRegistrationStatus(
+						registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+
 				List<String> statusCodes = new ArrayList<>();
 				statusCodes.add(RegistrationTransactionStatusCode.PROCESSED.toString());
 				statusCodes.add(RegistrationTransactionStatusCode.SUCCESS.toString());
-				if(!registrationStatusService.checkRegistrationTransactionExist(registrationId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes)) {
-					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-							registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
-					registrationStatusDto = registrationStatusService.getRegistrationStatus(
-							registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
-					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-							registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
-
+				if(!registrationStatusService.checkRegistrationTransactionExist(registrationId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes, registrationStatusDto.getLatestTransactionFlowId())) {
 					registrationStatusDto
 							.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.FINALIZATION.toString());
 					registrationStatusDto.setRegistrationStageName(getStageName());
@@ -267,8 +267,7 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 			}
 			finally {
 				if(isTransactionSkipped) {
-					object.setInternalError(false);
-					object.setIsValid(true);
+					object = null;
 				} else {
 					if (description.getStatusComment() != null)
 						registrationStatusDto.setStatusComment(description.getStatusComment());

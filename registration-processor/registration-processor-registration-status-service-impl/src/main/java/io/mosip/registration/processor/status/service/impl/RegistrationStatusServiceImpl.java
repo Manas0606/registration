@@ -224,7 +224,7 @@ public class RegistrationStatusServiceImpl
 			TransactionDto transactionDto = new TransactionDto(transactionId, registrationStatusDto.getRegistrationId(),
 					null, registrationStatusDto.getLatestTransactionTypeCode(), "Added registration status record",
 					registrationStatusDto.getLatestTransactionStatusCode(), registrationStatusDto.getStatusComment(),
-					registrationStatusDto.getSubStatusCode());
+					registrationStatusDto.getSubStatusCode(), registrationStatusDto.getLatestTransactionFlowId());
 			transactionDto.setReferenceId(registrationStatusDto.getRegistrationId());
 			transactionDto.setReferenceIdType("Added registration record");
 			transcationStatusService.addRegistrationTransaction(transactionDto);
@@ -287,7 +287,7 @@ public class RegistrationStatusServiceImpl
 		TransactionDto transactionDto = new TransactionDto(transactionId, registrationStatusDto.getRegistrationId(),
 				latestTransactionId, registrationStatusDto.getLatestTransactionTypeCode(),
 				"updated registration status record", registrationStatusDto.getLatestTransactionStatusCode(),
-				registrationStatusDto.getStatusComment(), registrationStatusDto.getSubStatusCode());
+				registrationStatusDto.getStatusComment(), registrationStatusDto.getSubStatusCode(), registrationStatusDto.getLatestTransactionFlowId());
 		if (registrationStatusDto.getRefId() == null) {
 			transactionDto.setReferenceId(registrationStatusDto.getRegistrationId());
 		} else {
@@ -881,10 +881,10 @@ public class RegistrationStatusServiceImpl
 	}
 
 	@Override
-	public boolean checkRegistrationTransactionExist(String rid, String trnTypeCode, List<String> statusCodes) {
+	public boolean checkRegistrationTransactionExist(String rid, String trnTypeCode, List<String> statusCodes, String latestTrnFlowId) {
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "",
 				"RegistrationStatusServiceImpl::checkRegistrationTransactionExist()::entry");
-		boolean isExist = transcationStatusService.isTransactionExist(rid, trnTypeCode, statusCodes);
+		boolean isExist = transcationStatusService.isTransactionExist(rid, trnTypeCode, statusCodes, latestTrnFlowId);
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "",
 				"RegistrationStatusServiceImpl::checkRegistrationTransactionExist()::exit");
 		return isExist;
