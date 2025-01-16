@@ -408,7 +408,8 @@ public class QualityClassifierStage extends MosipVerticleAPIManager {
 		}  else {
 			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 					regId, "Transaction already completed for Quality Classifier Stage. Ignore process for RID : " + regId);
-			object = null;
+			object.setInternalError(false);
+			object.setIsValid(true);
 		}
 
 		return object;

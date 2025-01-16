@@ -492,7 +492,8 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 		} else {
 			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 					registrationId, "Transaction already completed for UIN Generator Stage. Ignore process for RID : " + registrationId);
-			object = null;
+			object.setInternalError(false);
+			object.setIsValid(true);
 		}
 
 		return object;

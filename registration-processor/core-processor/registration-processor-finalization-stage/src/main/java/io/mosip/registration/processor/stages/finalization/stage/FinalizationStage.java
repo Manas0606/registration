@@ -267,7 +267,8 @@ public class FinalizationStage extends MosipVerticleAPIManager{
 			}
 			finally {
 				if(isTransactionSkipped) {
-					object = null;
+					object.setInternalError(false);
+					object.setIsValid(true);
 				} else {
 					if (description.getStatusComment() != null)
 						registrationStatusDto.setStatusComment(description.getStatusComment());
