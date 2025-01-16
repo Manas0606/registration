@@ -226,15 +226,19 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 				registrationId, "UinGeneratorStage::process()::entry");
 		UinGenResponseDto uinResponseDto = null;
 
-		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-				registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+		List<String> statusCodes = new ArrayList<>();
+		statusCodes.add(RegistrationTransactionStatusCode.PROCESSED.toString());
+		statusCodes.add(RegistrationTransactionStatusCode.SUCCESS.toString());
+		if(!registrationStatusService.checkRegistrationTransactionExist(registrationId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes)) {
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					registrationId, "Before Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
-		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(
-				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
-		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-				registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+			InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(
+					registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					registrationId, "After Fetching Records from Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
-		try {
+			try {
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.UIN_GENERATOR.toString());
 				registrationStatusDto.setRegistrationStageName(getStageName());
@@ -466,14 +470,14 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 						? PlatformSuccessMessages.RPR_UIN_GENERATOR_STAGE_SUCCESS.getCode()
 						: description.getCode();
 				String moduleName = ModuleName.UIN_GENERATOR.toString();
-			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId, "Before updateRegistrationStatus() for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, "Before updateRegistrationStatus() for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
-			registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
-			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId, "updateRegistrationStatus() complete for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, "updateRegistrationStatus() complete for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
-			String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
+				String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
 				String eventName = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventName.UPDATE.toString()
 						: EventName.EXCEPTION.toString();
 				String eventType = eventId.equalsIgnoreCase(EventId.RPR_402.toString()) ? EventType.BUSINESS.toString()
@@ -481,9 +485,14 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 
 				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
 						moduleId, moduleName, registrationId);
-			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId, "Creating Audit Record for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+						registrationId, "Creating Audit Record for Registration RID : " + registrationId + " " + (System.currentTimeMillis() - startTime) + " ms");
 
+			}
+		} else {
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					registrationId, "Transaction already completed for UIN Generator Stage. Ignore process for RID : " + registrationId);
+			object = null;
 		}
 
 		return object;
