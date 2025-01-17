@@ -308,6 +308,12 @@ public class RegistrationStatusServiceImpl
 				if (entity.getStatusCode() == null) {
 					entity.setStatusCode(dto.getStatusCode());
 				}
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(),
+						registrationStatusDto.getRegistrationId(),
+						"RegistrationStatusServiceImpl::updateRegistrationStatus():: getLatestTransactionFlowId " + registrationStatusDto.getLatestTransactionFlowId());
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(),
+						registrationStatusDto.getRegistrationId(),
+						"RegistrationStatusServiceImpl::updateRegistrationStatus():: entity.getLatestTransactionFlowId " + entity.getLatestTransactionFlowId());
 				registrationStatusDao.save(entity);
 				isTransactionSuccessful = true;
 				description.setMessage("Updated registration status successfully");
