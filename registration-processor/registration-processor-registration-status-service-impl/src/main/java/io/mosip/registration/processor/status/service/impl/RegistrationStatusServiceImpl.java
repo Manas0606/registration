@@ -650,6 +650,7 @@ public class RegistrationStatusServiceImpl
 		registrationStatusDto.setIteration(entity.getIteration());
 		registrationStatusDto.setWorkflowInstanceId(entity.getId().getWorkflowInstanceId());
 		registrationStatusDto.setPacketCreateDateTime(entity.getPacketCreatedDateTime());
+		registrationStatusDto.setLatestTransactionFlowId(entity.getLatestTransactionFlowId());
 		return registrationStatusDto;
 	}
 
@@ -937,6 +938,7 @@ public class RegistrationStatusServiceImpl
 		registrationStatusEntity.setLatestTransactionTimes(dto.getLatestTransactionTimes());
 		registrationStatusEntity.setResumeTimeStamp(dto.getResumeTimeStamp());
 		registrationStatusEntity.setDefaultResumeAction(dto.getDefaultResumeAction());
+		registrationStatusEntity.setLatestTransactionFlowId(dto.getLatestTransactionFlowId());
 		return registrationStatusEntity;
 	}
 
