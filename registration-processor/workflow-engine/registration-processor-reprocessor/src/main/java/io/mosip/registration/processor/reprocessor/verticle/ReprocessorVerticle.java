@@ -298,7 +298,9 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 							sendAndSetStatus(dto, messageDTO, stageName);
 						dto.setStatusComment(StatusUtil.RE_PROCESS_COMPLETED.getMessage());
 						dto.setSubStatusCode(StatusUtil.RE_PROCESS_COMPLETED.getCode());
-						if(dto.getLatestTransactionFlowId() == null)
+							regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), "",
+									"ReprocessorVerticle::getLatestTransactionFlowId()::" + dto.getLatestTransactionFlowId());
+						if(dto.getLatestTransactionFlowId() == null || dto.getLatestTransactionFlowId().isBlank())
 							dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
 						description.setMessage(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getMessage());
 						description.setCode(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getCode());
