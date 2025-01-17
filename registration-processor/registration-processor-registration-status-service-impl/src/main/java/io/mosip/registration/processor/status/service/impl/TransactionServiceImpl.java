@@ -134,7 +134,7 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 	public boolean isTransactionExist(String regId, String trnTypeCode, List<String> statusCode, String latestTrnFlowId) {
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"TransactionServiceImpl::isTransactionExist()::entry");
-		boolean isExist =  transactionRepositary.existsByRegIdAndTrnTypeCodeAndStatusCode(regId, trnTypeCode, statusCode, latestTrnFlowId);
+		boolean isExist =  transactionRepositary.existsByRegIdAndTrnTypeCodeAndStatusCode(regId, trnTypeCode, statusCode, (latestTrnFlowId!=null ? latestTrnFlowId:""));
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"TransactionServiceImpl::isTransactionExist()::exist");
 		return isExist;

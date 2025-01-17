@@ -282,7 +282,6 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 								dto.setStatusComment(StatusUtil.RE_PROCESS_RESTART_FROM_STAGE.getMessage());
 								dto.setSubStatusCode(StatusUtil.RE_PROCESS_RESTART_FROM_STAGE.getCode());
 								dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
-							registrationStatusService.updateRegistrationStatusForWorkflowEngine(dto, moduleId, moduleName);
 							sendAndSetStatus(dto, messageDTO, stageName);
 							description
 										.setMessage(
@@ -306,8 +305,7 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 									"ReprocessorVerticle::getLatestTransactionFlowId()::" + dto.getLatestTransactionFlowId());
 						if(dto.getLatestTransactionFlowId() == null || dto.getLatestTransactionFlowId().isBlank())
 							dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
-							registrationStatusService.updateRegistrationStatusForWorkflowEngine(dto, moduleId, moduleName);
-							sendAndSetStatus(dto, messageDTO, stageName);
+						sendAndSetStatus(dto, messageDTO, stageName);
 						description.setMessage(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getMessage());
 						description.setCode(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getCode());
 						}
@@ -415,12 +413,13 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 
 	private void sendAndSetStatus(InternalRegistrationStatusDto dto, MessageDTO messageDTO, String stageName) {
 		MessageBusAddress address = new MessageBusAddress(stageName);
-		sendMessage(messageDTO, address);
 		dto.setUpdatedBy(ReprocessorConstants.USER);
 		Integer reprocessRetryCount = dto.getReProcessRetryCount() != null ? dto.getReProcessRetryCount() + 1 : 1;
 		dto.setReProcessRetryCount(reprocessRetryCount);
 		dto.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.REPROCESS.toString());
 		dto.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.PACKET_REPROCESS.toString());
+		registrationStatusService.updateRegistrationStatusForWorkflowEngine(dto, moduleId, moduleName);
+		sendMessage(messageDTO, address);
 	}
 	
 	
