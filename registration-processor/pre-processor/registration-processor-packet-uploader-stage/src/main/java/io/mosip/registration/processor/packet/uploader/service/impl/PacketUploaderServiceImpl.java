@@ -199,7 +199,8 @@ public class PacketUploaderServiceImpl implements PacketUploaderService<MessageD
         regEntity = syncRegistrationService.findByWorkflowInstanceId(messageDTO.getWorkflowInstanceId());
             dto = registrationStatusService.getRegistrationStatus(
                     registrationId, messageDTO.getReg_type(), messageDTO.getIteration(), regEntity.getWorkflowInstanceId());
-
+            regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+                    registrationId, "PacketUploaderServiceImpl::validateAndUploadPacket():: Flow Id" + dto.getLatestTransactionFlowId());
                 dto.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.UPLOAD_PACKET.toString());
                 dto.setRegistrationStageName(stageName);
 
