@@ -116,6 +116,10 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 	@Value("${server.port}")
 	private String port;
 
+	/** Module-Id can be Both Success/Error code */
+	private String moduleId = PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getCode();
+	private String moduleName = ModuleName.RE_PROCESSOR.toString();
+
 	/**
 	 * Deploy verticle.
 	 */
@@ -275,11 +279,12 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 						if (isRestartFromStageRequired(dto, reprocessRestartTriggerMap)) {
 							stageName = MessageBusUtil.getMessageBusAdress(reprocessRestartFromStage);
 							stageName = stageName.concat(ReprocessorConstants.BUS_IN);
-								sendAndSetStatus(dto, messageDTO, stageName);
 								dto.setStatusComment(StatusUtil.RE_PROCESS_RESTART_FROM_STAGE.getMessage());
 								dto.setSubStatusCode(StatusUtil.RE_PROCESS_RESTART_FROM_STAGE.getCode());
 								dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
-								description
+							registrationStatusService.updateRegistrationStatusForWorkflowEngine(dto, moduleId, moduleName);
+							sendAndSetStatus(dto, messageDTO, stageName);
+							description
 										.setMessage(
 												PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_RESTART_FROM_STAGE_SUCCESS
 														.getMessage());
@@ -295,13 +300,14 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 						} else {
 							stageName = stageName.concat(ReprocessorConstants.BUS_IN);
 						}
-							sendAndSetStatus(dto, messageDTO, stageName);
 						dto.setStatusComment(StatusUtil.RE_PROCESS_COMPLETED.getMessage());
 						dto.setSubStatusCode(StatusUtil.RE_PROCESS_COMPLETED.getCode());
 							regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), "",
 									"ReprocessorVerticle::getLatestTransactionFlowId()::" + dto.getLatestTransactionFlowId());
 						if(dto.getLatestTransactionFlowId() == null || dto.getLatestTransactionFlowId().isBlank())
 							dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
+							registrationStatusService.updateRegistrationStatusForWorkflowEngine(dto, moduleId, moduleName);
+							sendAndSetStatus(dto, messageDTO, stageName);
 						description.setMessage(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getMessage());
 						description.setCode(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getCode());
 						}
@@ -309,12 +315,6 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(),
 							LoggerFileConstant.REGISTRATIONID.toString(), registrationId, description.getMessage());
 
-					/** Module-Id can be Both Success/Error code */
-					String moduleId = PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getCode();
-					String moduleName = ModuleName.RE_PROCESSOR.toString();
-					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), "",
-							"ReprocessorVerticle::getLatestTransactionFlowId()::" + dto.getLatestTransactionFlowId());
-					registrationStatusService.updateRegistrationStatusForWorkflowEngine(dto, moduleId, moduleName);
 					String eventId = EventId.RPR_402.toString();
 					String eventName = EventName.UPDATE.toString();
 					String eventType = EventType.BUSINESS.toString();
@@ -355,11 +355,10 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 			String eventType = isTransactionSuccessful ? EventType.BUSINESS.toString() : EventType.SYSTEM.toString();
 
 			/** Module-Id can be Both Success/Error code */
-			String moduleId = isTransactionSuccessful ? PlatformSuccessMessages.RPR_RE_PROCESS_SUCCESS.getCode()
+			String moduleId1= isTransactionSuccessful ? PlatformSuccessMessages.RPR_RE_PROCESS_SUCCESS.getCode()
 					: description.getCode();
-			String moduleName = ModuleName.RE_PROCESSOR.toString();
 			auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
-					moduleId, moduleName, (ridSb.toString().length()>1?ridSb.substring(0,ridSb.length()-1):""));
+					moduleId1, moduleName, (ridSb.toString().length()>1?ridSb.substring(0,ridSb.length()-1):""));
 		}
 
 		return object;
