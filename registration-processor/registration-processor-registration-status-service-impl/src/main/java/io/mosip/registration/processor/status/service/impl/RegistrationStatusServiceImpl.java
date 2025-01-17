@@ -706,6 +706,7 @@ public class RegistrationStatusServiceImpl
 		else
 			registrationStatusEntity.setLastSuccessStageName(existingLastSuccessStageName);
 		registrationStatusEntity.setPacketCreatedDateTime(dto.getPacketCreateDateTime());
+		registrationStatusEntity.setLatestTransactionFlowId(dto.getLatestTransactionFlowId());
 		return registrationStatusEntity;
 	}
 
