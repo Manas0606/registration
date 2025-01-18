@@ -240,6 +240,7 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 			return;
 		addTagsToMessageDTO(message);
 		message.setLastHopTimestamp(DateUtils.formatToISOString(DateUtils.getUTCCurrentDateTime()));
+		message.setTransactionId(UUID.randomUUID().toString());
 		mosipEventBus.send(toAddress, message);
 	}
 
@@ -273,6 +274,7 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 				if(isTransactionAllowed(messageDTO.getTransactionFlowId(), messageDTO.getTransactionId(), messageDTO.getRid())) {
 					MessageDTO result = process(messageDTO);
 					updateTransactionStatus(messageDTO.getTransactionId(), RegistrationTransactionStatusCode.PROCESSED.toString());
+					result.setTransactionId(UUID.randomUUID().toString());
 					future.complete(result);
 				} else {
 					future.fail(new DuplicateTransactionException("rid: " + messageDTO.getRid() +
