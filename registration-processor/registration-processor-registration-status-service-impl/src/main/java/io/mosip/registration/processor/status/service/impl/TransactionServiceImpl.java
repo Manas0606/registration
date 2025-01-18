@@ -5,6 +5,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.mosip.registration.processor.core.code.RegistrationTransactionStatusCode;
+import io.mosip.registration.processor.status.entity.TrackerEntity;
+import io.mosip.registration.processor.status.repositary.TrackerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -35,6 +38,11 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 	/** The transaction repositary. */
 	@Autowired
 	TransactionRepository<TransactionEntity, String> transactionRepositary;
+
+	@Autowired
+	TrackerRepository trackerRepository;
+
+
 
 	/*
 	 * (non-Javadoc)
@@ -131,13 +139,42 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 	}
 
 	@Override
-	public boolean isTransactionExist(String regId, String trnTypeCode, List<String> statusCode, String latestTrnFlowId) {
+	public TrackerEntity isTransactionExist(String regId, String transactionId, String latestTrnFlowId) {
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"TransactionServiceImpl::isTransactionExist()::entry");
-		boolean isExist =  transactionRepositary.existsByRegIdAndTrnTypeCodeAndStatusCode(regId, trnTypeCode, statusCode, (latestTrnFlowId!=null ? latestTrnFlowId:""));
+		TrackerEntity entity = trackerRepository.findByRegIdAndTransactionIdAndFlowId(regId, transactionId, latestTrnFlowId);
+		if(entity == null) {
+			entity = new TrackerEntity();
+			entity.setRegistrationId(regId);
+			entity.setTransactionId(transactionId);
+			entity.setTransactionFlowId(latestTrnFlowId);
+			entity.setStatusCode(RegistrationTransactionStatusCode.IN_PROGRESS.toString());
+			entity.setCreateDateTime(LocalDateTime.now());
+			trackerRepository.save(entity);
+		}
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"TransactionServiceImpl::isTransactionExist()::exist");
-		return isExist;
+
+		return entity;
+	}
+
+	@Override
+	public TrackerEntity updateTransactionComplete(String transactionId, String StatusCode) throws TransactionsUnavailableException {
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), transactionId,
+				"TransactionServiceImpl::updateTransactionComplete()::entry");
+		TrackerEntity entity = trackerRepository.findByTransactionId(transactionId);
+		if(entity != null) {
+			entity.setStatusCode(StatusCode);
+			entity.setUpdatedBy("MOSIP");
+			entity.setUpdateDateTime(LocalDateTime.now());
+			trackerRepository.save(entity);
+		} else {
+			throw new TransactionsUnavailableException(PlatformErrorMessages.RPR_PGS_NO_RECORDS_EXCEPTION.getCode(), "Record Not Found for the Transaction Id : " + transactionId);
+		}
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), transactionId,
+				"TransactionServiceImpl::updateTransactionComplete()::exist");
+
+		return entity;
 	}
 
 	/**

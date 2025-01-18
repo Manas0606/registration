@@ -241,6 +241,7 @@ public class SecurezoneNotificationStage extends MosipVerticleAPIManager {
 				registrationStatusDto.setSubStatusCode(StatusUtil.NOTIFICATION_RECEIVED_TO_SECUREZONE.getCode());
 				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.toString());
 				registrationStatusDto.setLatestTransactionFlowId(RegistrationUtility.generateId());
+				messageDTO.setTransactionFlowId(registrationStatusDto.getLatestTransactionFlowId());
 
 				isTransactionSuccessful = true;
 				description.setMessage(PlatformSuccessMessages.RPR_SEZ_SECUREZONE_NOTIFICATION.getMessage() + " -- "

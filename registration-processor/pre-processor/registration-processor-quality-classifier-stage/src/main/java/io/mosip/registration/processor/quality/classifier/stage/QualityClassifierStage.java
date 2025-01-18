@@ -2,7 +2,6 @@ package io.mosip.registration.processor.quality.classifier.stage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -222,193 +221,183 @@ public class QualityClassifierStage extends MosipVerticleAPIManager {
 		object.setInternalError(Boolean.FALSE);
 		object.setIsValid(Boolean.FALSE);
 		Boolean isTransactionSuccessful = Boolean.FALSE;
-
-		long startTime = System.currentTimeMillis();
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"QualityCheckerStage::process()::entry");
+
+		long startTime = System.currentTimeMillis();
 		InternalRegistrationStatusDto registrationStatusDto = registrationStatusService.getRegistrationStatus(regId,
 				object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
 		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"QualityCheckerStage::Time taken to find rid info - " + (System.currentTimeMillis() - startTime) + " (ms)");
 
-		List<String> statusCodes = new ArrayList<>();
-		statusCodes.add(RegistrationTransactionStatusCode.PROCESSED.toString());
-		statusCodes.add(RegistrationTransactionStatusCode.SUCCESS.toString());
-		if(!registrationStatusService.checkRegistrationTransactionExist(regId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes, registrationStatusDto.getLatestTransactionFlowId())) {
-			try {
-				String individualBiometricsObject = basedPacketManagerService.getFieldByMappingJsonKey(regId,
+		try {
+			String individualBiometricsObject = basedPacketManagerService.getFieldByMappingJsonKey(regId,
+					MappingJsonConstants.INDIVIDUAL_BIOMETRICS, registrationStatusDto.getRegistrationType(),
+					ProviderStageName.QUALITY_CHECKER);
+			if (StringUtils.isEmpty(individualBiometricsObject)) {
+				packetManagerService.addOrUpdateTags(regId, getQualityTags(null));
+				description.setCode(PlatformErrorMessages.INDIVIDUAL_BIOMETRIC_NOT_FOUND.getCode());
+				description.setMessage(PlatformErrorMessages.INDIVIDUAL_BIOMETRIC_NOT_FOUND.getMessage());
+				object.setIsValid(Boolean.TRUE);
+				isTransactionSuccessful = Boolean.TRUE;
+				registrationStatusDto
+						.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.SUCCESS.toString());
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.toString());
+				registrationStatusDto.setStatusComment(StatusUtil.INDIVIDUAL_BIOMETRIC_NOT_FOUND.getMessage());
+				registrationStatusDto.setSubStatusCode(StatusUtil.INDIVIDUAL_BIOMETRIC_NOT_FOUND.getCode());
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
+						"Individual Biometric parameter is not present in ID Json");
+			} else {
+				startTime = System.currentTimeMillis();
+				BiometricRecord biometricRecord = basedPacketManagerService.getBiometricsByMappingJsonKey(regId,
 						MappingJsonConstants.INDIVIDUAL_BIOMETRICS, registrationStatusDto.getRegistrationType(),
 						ProviderStageName.QUALITY_CHECKER);
-				if (StringUtils.isEmpty(individualBiometricsObject)) {
-					packetManagerService.addOrUpdateTags(regId, getQualityTags(null));
-					description.setCode(PlatformErrorMessages.INDIVIDUAL_BIOMETRIC_NOT_FOUND.getCode());
-					description.setMessage(PlatformErrorMessages.INDIVIDUAL_BIOMETRIC_NOT_FOUND.getMessage());
-					object.setIsValid(Boolean.TRUE);
-					isTransactionSuccessful = Boolean.TRUE;
-					registrationStatusDto
-							.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.SUCCESS.toString());
-					registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.toString());
-					registrationStatusDto.setStatusComment(StatusUtil.INDIVIDUAL_BIOMETRIC_NOT_FOUND.getMessage());
-					registrationStatusDto.setSubStatusCode(StatusUtil.INDIVIDUAL_BIOMETRIC_NOT_FOUND.getCode());
-					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
-							"Individual Biometric parameter is not present in ID Json");
-				} else {
-					startTime = System.currentTimeMillis();
-					BiometricRecord biometricRecord = basedPacketManagerService.getBiometricsByMappingJsonKey(regId,
-							MappingJsonConstants.INDIVIDUAL_BIOMETRICS, registrationStatusDto.getRegistrationType(),
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
+						"QualityCheckerStage::Time taken to get biometric info - " + (System.currentTimeMillis() - startTime) + " (ms)");
+				if (biometricRecord == null || CollectionUtils.isEmpty(biometricRecord.getSegments())) {
+					biometricRecord = basedPacketManagerService.getBiometricsByMappingJsonKey(regId,
+							MappingJsonConstants.AUTHENTICATION_BIOMETRICS, registrationStatusDto.getRegistrationType(),
 							ProviderStageName.QUALITY_CHECKER);
-					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
-							"QualityCheckerStage::Time taken to get biometric info - " + (System.currentTimeMillis() - startTime) + " (ms)");
-					if (biometricRecord == null || CollectionUtils.isEmpty(biometricRecord.getSegments())) {
-						biometricRecord = basedPacketManagerService.getBiometricsByMappingJsonKey(regId,
-								MappingJsonConstants.AUTHENTICATION_BIOMETRICS, registrationStatusDto.getRegistrationType(),
-								ProviderStageName.QUALITY_CHECKER);
-					}
-
-					if (biometricRecord == null || biometricRecord.getSegments() == null
-							|| biometricRecord.getSegments().size() == 0) {
-						description.setCode(PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getCode());
-						description.setMessage(PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getMessage());
-						regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-								LoggerFileConstant.REGISTRATIONID.toString(), regId,
-								PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getMessage());
-						throw new FileMissingException(PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getCode(),
-								PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getMessage());
-					}
-
-
-					packetManagerService.addOrUpdateTags(regId, getQualityTags(biometricRecord.getSegments()));
-
-					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
-							"UpdatingTags::success ");
-
-					object.setIsValid(Boolean.TRUE);
-					description.setCode(PlatformSuccessMessages.RPR_QUALITY_CHECK_SUCCESS.getCode());
-					description.setMessage(PlatformSuccessMessages.RPR_QUALITY_CHECK_SUCCESS.getMessage());
-					isTransactionSuccessful = Boolean.TRUE;
-					registrationStatusDto
-							.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.SUCCESS.toString());
-					registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.toString());
-					registrationStatusDto.setStatusComment(StatusUtil.BIOMETRIC_QUALITY_CHECK_SUCCESS.getMessage());
-					registrationStatusDto.setSubStatusCode(StatusUtil.BIOMETRIC_QUALITY_CHECK_SUCCESS.getCode());
-					regProcLogger.info(LoggerFileConstant.SESSIONID.toString(),
-							LoggerFileConstant.REGISTRATIONID.toString(), regId, "QualityCheckerImpl::success");
 				}
 
-			} catch (ApisResourceAccessException e) {
-				registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
-						.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION));
-				registrationStatusDto.setStatusComment(trimExpMessage
-						.trimExceptionMessage(StatusUtil.API_RESOUCE_ACCESS_FAILED.getMessage() + e.getMessage()));
-				registrationStatusDto.setSubStatusCode(StatusUtil.API_RESOUCE_ACCESS_FAILED.getCode());
-				object.setInternalError(Boolean.TRUE);
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						regId, PlatformErrorMessages.RPR_PUM_NGINX_ACCESS_FAILED.name() + ExceptionUtils.getStackTrace(e));
-
-				description.setMessage(PlatformErrorMessages.RPR_PUM_NGINX_ACCESS_FAILED.getMessage());
-				description.setCode(PlatformErrorMessages.RPR_PUM_NGINX_ACCESS_FAILED.getCode());
-			} catch (FileMissingException e) {
-				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
-				registrationStatusDto.setStatusComment(StatusUtil.BIO_METRIC_FILE_MISSING.getMessage());
-				registrationStatusDto.setSubStatusCode(StatusUtil.BIO_METRIC_FILE_MISSING.getCode());
-				registrationStatusDto.setLatestTransactionStatusCode(
-						registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.BIOMETRIC_EXCEPTION));
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						regId,
-						PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getMessage() + ExceptionUtils.getStackTrace(e));
-				object.setInternalError(Boolean.TRUE);
-				description.setCode(PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getCode());
-				description.setMessage(PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getMessage());
-
-			} catch (BiometricException e) {
-				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
-				registrationStatusDto.setStatusComment(trimExceptionMsg
-						.trimExceptionMessage(StatusUtil.BIO_METRIC_EXCEPTION.getMessage() + e.getMessage()));
-				registrationStatusDto.setSubStatusCode(StatusUtil.BIO_METRIC_EXCEPTION.getCode());
-				registrationStatusDto.setLatestTransactionStatusCode(
-						registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.BIOMETRIC_EXCEPTION));
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						regId,
-						PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getMessage() + ExceptionUtils.getStackTrace(e));
-				object.setInternalError(Boolean.TRUE);
-				description.setCode(PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getCode());
-				description.setMessage(PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getMessage());
-			} catch (JsonProcessingException e) {
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						regId, RegistrationStatusCode.FAILED.toString() + e.getMessage()
-								+ org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(e));
-				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
-				registrationStatusDto.setStatusComment(trimExceptionMsg
-						.trimExceptionMessage(StatusUtil.JSON_PARSING_EXCEPTION.getMessage() + e.getMessage()));
-				registrationStatusDto.setSubStatusCode(StatusUtil.JSON_PARSING_EXCEPTION.getCode());
-				registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
-						.getStatusCode(RegistrationExceptionTypeCode.JSON_PROCESSING_EXCEPTION));
-				description.setMessage(PlatformErrorMessages.RPR_SYS_JSON_PARSING_EXCEPTION.getMessage());
-				description.setCode(PlatformErrorMessages.RPR_SYS_JSON_PARSING_EXCEPTION.getCode());
-				object.setInternalError(Boolean.TRUE);
-			} catch (IOException e) {
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						regId, RegistrationStatusCode.FAILED.toString() + e.getMessage()
-								+ org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(e));
-				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
-				registrationStatusDto.setStatusComment(
-						trimExceptionMsg.trimExceptionMessage(StatusUtil.IO_EXCEPTION.getMessage() + e.getMessage()));
-				registrationStatusDto.setSubStatusCode(StatusUtil.IO_EXCEPTION.getCode());
-				registrationStatusDto.setLatestTransactionStatusCode(
-						registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.IOEXCEPTION));
-				description.setMessage(PlatformErrorMessages.RPR_SYS_IO_EXCEPTION.getMessage());
-				description.setCode(PlatformErrorMessages.RPR_SYS_IO_EXCEPTION.getCode());
-				object.setInternalError(Boolean.TRUE);
-			} catch (PacketManagerException e) {
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						regId, RegistrationStatusCode.FAILED.toString() + e.getMessage()
-								+ org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(e));
-				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
-				registrationStatusDto.setStatusComment(trimExceptionMsg
-						.trimExceptionMessage(StatusUtil.PACKET_MANAGER_EXCEPTION.getMessage() + e.getMessage()));
-				registrationStatusDto.setSubStatusCode(StatusUtil.PACKET_MANAGER_EXCEPTION.getCode());
-				registrationStatusDto.setLatestTransactionStatusCode(
-						registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.PACKET_MANAGER_EXCEPTION));
-				description.setMessage(PlatformErrorMessages.PACKET_MANAGER_EXCEPTION.getMessage());
-				description.setCode(PlatformErrorMessages.PACKET_MANAGER_EXCEPTION.getCode());
-				object.setInternalError(Boolean.TRUE);
-			} catch (Exception ex) {
-				registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
-				registrationStatusDto.setStatusComment(trimExceptionMsg
-						.trimExceptionMessage(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getMessage() + ex.getMessage()));
-				registrationStatusDto.setSubStatusCode(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getCode());
-				registrationStatusDto.setLatestTransactionStatusCode(
-						registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.EXCEPTION));
-				regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-						regId,
-						RegistrationStatusCode.FAILED.toString() + ex.getMessage() + ExceptionUtils.getStackTrace(ex));
-				object.setInternalError(Boolean.TRUE);
-				description.setCode(PlatformErrorMessages.RPR_BDD_UNKNOWN_EXCEPTION.getCode());
-				description.setMessage(PlatformErrorMessages.RPR_BDD_UNKNOWN_EXCEPTION.getMessage());
-			} finally {
-				if(object.getInternalError()) {
-					updateErrorFlags(registrationStatusDto, object);
+				if (biometricRecord == null || biometricRecord.getSegments() == null
+						|| biometricRecord.getSegments().size() == 0) {
+					description.setCode(PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getCode());
+					description.setMessage(PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getMessage());
+					regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+							LoggerFileConstant.REGISTRATIONID.toString(), regId,
+							PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getMessage());
+					throw new FileMissingException(PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getCode(),
+							PlatformErrorMessages.RPR_QCR_BIO_FILE_MISSING.getMessage());
 				}
-				object.setRid(registrationStatusDto.getRegistrationId());
-				registrationStatusDto.setRegistrationStageName(getStageName());
+
+
+				packetManagerService.addOrUpdateTags(regId, getQualityTags(biometricRecord.getSegments()));
+
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
+						"UpdatingTags::success ");
+
+				object.setIsValid(Boolean.TRUE);
+				description.setCode(PlatformSuccessMessages.RPR_QUALITY_CHECK_SUCCESS.getCode());
+				description.setMessage(PlatformSuccessMessages.RPR_QUALITY_CHECK_SUCCESS.getMessage());
+				isTransactionSuccessful = Boolean.TRUE;
 				registrationStatusDto
-						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.QUALITY_CLASSIFIER.toString());
-				String moduleId = isTransactionSuccessful ? PlatformSuccessMessages.RPR_QUALITY_CHECK_SUCCESS.getCode()
-						: description.getCode();
-				String moduleName = ModuleName.QUALITY_CLASSIFIER.toString();
-				registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
-				String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
-				String eventName = isTransactionSuccessful ? EventName.UPDATE.toString() : EventName.EXCEPTION.toString();
-				String eventType = isTransactionSuccessful ? EventType.BUSINESS.toString() : EventType.SYSTEM.toString();
-
-				auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
-						moduleId, moduleName, regId);
-
+						.setLatestTransactionStatusCode(RegistrationTransactionStatusCode.SUCCESS.toString());
+				registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.toString());
+				registrationStatusDto.setStatusComment(StatusUtil.BIOMETRIC_QUALITY_CHECK_SUCCESS.getMessage());
+				registrationStatusDto.setSubStatusCode(StatusUtil.BIOMETRIC_QUALITY_CHECK_SUCCESS.getCode());
+				regProcLogger.info(LoggerFileConstant.SESSIONID.toString(),
+						LoggerFileConstant.REGISTRATIONID.toString(), regId, "QualityCheckerImpl::success");
 			}
-		}  else {
-			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
-					regId, "Transaction already completed for Quality Classifier Stage. Ignore process for RID : " + regId);
-			object=null;
+
+		} catch (ApisResourceAccessException e) {
+			registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
+					.getStatusCode(RegistrationExceptionTypeCode.APIS_RESOURCE_ACCESS_EXCEPTION));
+			registrationStatusDto.setStatusComment(trimExpMessage
+					.trimExceptionMessage(StatusUtil.API_RESOUCE_ACCESS_FAILED.getMessage() + e.getMessage()));
+			registrationStatusDto.setSubStatusCode(StatusUtil.API_RESOUCE_ACCESS_FAILED.getCode());
+			object.setInternalError(Boolean.TRUE);
+			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					regId, PlatformErrorMessages.RPR_PUM_NGINX_ACCESS_FAILED.name() + ExceptionUtils.getStackTrace(e));
+
+			description.setMessage(PlatformErrorMessages.RPR_PUM_NGINX_ACCESS_FAILED.getMessage());
+			description.setCode(PlatformErrorMessages.RPR_PUM_NGINX_ACCESS_FAILED.getCode());
+		} catch (FileMissingException e) {
+			registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
+			registrationStatusDto.setStatusComment(StatusUtil.BIO_METRIC_FILE_MISSING.getMessage());
+			registrationStatusDto.setSubStatusCode(StatusUtil.BIO_METRIC_FILE_MISSING.getCode());
+			registrationStatusDto.setLatestTransactionStatusCode(
+					registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.BIOMETRIC_EXCEPTION));
+			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					regId,
+					PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getMessage() + ExceptionUtils.getStackTrace(e));
+			object.setInternalError(Boolean.TRUE);
+			description.setCode(PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getCode());
+			description.setMessage(PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getMessage());
+
+		} catch (BiometricException e) {
+			registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
+			registrationStatusDto.setStatusComment(trimExceptionMsg
+					.trimExceptionMessage(StatusUtil.BIO_METRIC_EXCEPTION.getMessage() + e.getMessage()));
+			registrationStatusDto.setSubStatusCode(StatusUtil.BIO_METRIC_EXCEPTION.getCode());
+			registrationStatusDto.setLatestTransactionStatusCode(
+					registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.BIOMETRIC_EXCEPTION));
+			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					regId,
+					PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getMessage() + ExceptionUtils.getStackTrace(e));
+			object.setInternalError(Boolean.TRUE);
+			description.setCode(PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getCode());
+			description.setMessage(PlatformErrorMessages.RPR_QCR_BIOMETRIC_EXCEPTION.getMessage());
+		} catch (JsonProcessingException e) {
+			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					regId, RegistrationStatusCode.FAILED.toString() + e.getMessage()
+							+ org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(e));
+			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
+			registrationStatusDto.setStatusComment(trimExceptionMsg
+					.trimExceptionMessage(StatusUtil.JSON_PARSING_EXCEPTION.getMessage() + e.getMessage()));
+			registrationStatusDto.setSubStatusCode(StatusUtil.JSON_PARSING_EXCEPTION.getCode());
+			registrationStatusDto.setLatestTransactionStatusCode(registrationStatusMapperUtil
+					.getStatusCode(RegistrationExceptionTypeCode.JSON_PROCESSING_EXCEPTION));
+			description.setMessage(PlatformErrorMessages.RPR_SYS_JSON_PARSING_EXCEPTION.getMessage());
+			description.setCode(PlatformErrorMessages.RPR_SYS_JSON_PARSING_EXCEPTION.getCode());
+			object.setInternalError(Boolean.TRUE);
+		} catch (IOException e) {
+			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					regId, RegistrationStatusCode.FAILED.toString() + e.getMessage()
+							+ org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(e));
+			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.toString());
+			registrationStatusDto.setStatusComment(
+					trimExceptionMsg.trimExceptionMessage(StatusUtil.IO_EXCEPTION.getMessage() + e.getMessage()));
+			registrationStatusDto.setSubStatusCode(StatusUtil.IO_EXCEPTION.getCode());
+			registrationStatusDto.setLatestTransactionStatusCode(
+					registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.IOEXCEPTION));
+			description.setMessage(PlatformErrorMessages.RPR_SYS_IO_EXCEPTION.getMessage());
+			description.setCode(PlatformErrorMessages.RPR_SYS_IO_EXCEPTION.getCode());
+			object.setInternalError(Boolean.TRUE);
+		} catch (PacketManagerException e) {
+			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					regId, RegistrationStatusCode.FAILED.toString() + e.getMessage()
+							+ org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(e));
+			registrationStatusDto.setStatusCode(RegistrationStatusCode.PROCESSING.name());
+			registrationStatusDto.setStatusComment(trimExceptionMsg
+					.trimExceptionMessage(StatusUtil.PACKET_MANAGER_EXCEPTION.getMessage() + e.getMessage()));
+			registrationStatusDto.setSubStatusCode(StatusUtil.PACKET_MANAGER_EXCEPTION.getCode());
+			registrationStatusDto.setLatestTransactionStatusCode(
+					registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.PACKET_MANAGER_EXCEPTION));
+			description.setMessage(PlatformErrorMessages.PACKET_MANAGER_EXCEPTION.getMessage());
+			description.setCode(PlatformErrorMessages.PACKET_MANAGER_EXCEPTION.getCode());
+			object.setInternalError(Boolean.TRUE);
+		} catch (Exception ex) {
+			registrationStatusDto.setStatusCode(RegistrationStatusCode.FAILED.name());
+			registrationStatusDto.setStatusComment(trimExceptionMsg
+					.trimExceptionMessage(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getMessage() + ex.getMessage()));
+			registrationStatusDto.setSubStatusCode(StatusUtil.UNKNOWN_EXCEPTION_OCCURED.getCode());
+			registrationStatusDto.setLatestTransactionStatusCode(
+					registrationStatusMapperUtil.getStatusCode(RegistrationExceptionTypeCode.EXCEPTION));
+			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					regId,
+					RegistrationStatusCode.FAILED.toString() + ex.getMessage() + ExceptionUtils.getStackTrace(ex));
+			object.setInternalError(Boolean.TRUE);
+			description.setCode(PlatformErrorMessages.RPR_BDD_UNKNOWN_EXCEPTION.getCode());
+			description.setMessage(PlatformErrorMessages.RPR_BDD_UNKNOWN_EXCEPTION.getMessage());
+		} finally {
+			if(object.getInternalError()) {
+				updateErrorFlags(registrationStatusDto, object);
+			}
+			object.setRid(registrationStatusDto.getRegistrationId());
+			registrationStatusDto.setRegistrationStageName(getStageName());
+			registrationStatusDto
+					.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.QUALITY_CLASSIFIER.toString());
+			String moduleId = isTransactionSuccessful ? PlatformSuccessMessages.RPR_QUALITY_CHECK_SUCCESS.getCode()
+					: description.getCode();
+			String moduleName = ModuleName.QUALITY_CLASSIFIER.toString();
+			registrationStatusService.updateRegistrationStatus(registrationStatusDto, moduleId, moduleName);
+			String eventId = isTransactionSuccessful ? EventId.RPR_402.toString() : EventId.RPR_405.toString();
+			String eventName = isTransactionSuccessful ? EventName.UPDATE.toString() : EventName.EXCEPTION.toString();
+			String eventType = isTransactionSuccessful ? EventType.BUSINESS.toString() : EventType.SYSTEM.toString();
+
+			auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
+					moduleId, moduleName, regId);
 		}
 
 		return object;

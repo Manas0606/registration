@@ -282,6 +282,7 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 								dto.setStatusComment(StatusUtil.RE_PROCESS_RESTART_FROM_STAGE.getMessage());
 								dto.setSubStatusCode(StatusUtil.RE_PROCESS_RESTART_FROM_STAGE.getCode());
 								dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
+							messageDTO.setTransactionFlowId(dto.getLatestTransactionFlowId());
 							sendAndSetStatus(dto, messageDTO, stageName);
 							description
 										.setMessage(
@@ -303,8 +304,11 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 						dto.setSubStatusCode(StatusUtil.RE_PROCESS_COMPLETED.getCode());
 							regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), "",
 									"ReprocessorVerticle::getLatestTransactionFlowId()::" + dto.getLatestTransactionFlowId());
-						if(dto.getLatestTransactionFlowId() == null || dto.getLatestTransactionFlowId().isBlank())
+						if(dto.getLatestTransactionFlowId() == null || dto.getLatestTransactionFlowId().isBlank()) {
 							dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
+							messageDTO.setTransactionFlowId(dto.getLatestTransactionFlowId());
+						}
+
 						sendAndSetStatus(dto, messageDTO, stageName);
 						description.setMessage(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getMessage());
 						description.setCode(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getCode());
