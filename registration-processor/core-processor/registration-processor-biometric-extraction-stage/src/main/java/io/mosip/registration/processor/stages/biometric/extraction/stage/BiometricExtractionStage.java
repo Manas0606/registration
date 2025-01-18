@@ -166,9 +166,15 @@ public class BiometricExtractionStage extends MosipVerticleAPIManager{
 		InternalRegistrationStatusDto registrationStatusDto=null;
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
 				registrationId, "BiometricExtractionStage::process()::entry");
-			try {
-		 registrationStatusDto = registrationStatusService.getRegistrationStatus(
+		registrationStatusDto = registrationStatusService.getRegistrationStatus(
 				registrationId, object.getReg_type(), object.getIteration(), object.getWorkflowInstanceId());
+
+		List<String> statusCodes = new ArrayList<>();
+		statusCodes.add(RegistrationTransactionStatusCode.PROCESSED.toString());
+		statusCodes.add(RegistrationTransactionStatusCode.SUCCESS.toString());
+		if(!registrationStatusService.checkRegistrationTransactionExist(registrationId, RegistrationTransactionTypeCode.FINALIZATION.toString(), statusCodes, registrationStatusDto.getLatestTransactionFlowId())) {
+			try {
+
 				registrationStatusDto
 						.setLatestTransactionTypeCode(RegistrationTransactionTypeCode.BIOMETRIC_EXTRACTION.toString());
 				registrationStatusDto.setRegistrationStageName(getStageName());
@@ -334,7 +340,11 @@ public class BiometricExtractionStage extends MosipVerticleAPIManager{
 						moduleId, moduleName, registrationId);
 
 			}
-
+		} else {
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+					registrationId, "Transaction already completed for BioExtraction Stage. Ignore process for RID : " + registrationId);
+			object = null;
+		}
 		return object;
 	}
 
