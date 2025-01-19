@@ -306,8 +306,8 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 									"ReprocessorVerticle::getLatestTransactionFlowId()::" + dto.getLatestTransactionFlowId());
 						if(dto.getLatestTransactionFlowId() == null || dto.getLatestTransactionFlowId().isBlank()) {
 							dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
-							messageDTO.setTransactionFlowId(dto.getLatestTransactionFlowId());
 						}
+						messageDTO.setTransactionFlowId(dto.getLatestTransactionFlowId());
 
 						sendAndSetStatus(dto, messageDTO, stageName);
 						description.setMessage(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getMessage());

@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.google.gson.Gson;
 import io.mosip.kernel.core.exception.ExceptionUtils;
 import io.mosip.registration.processor.core.code.RegistrationTransactionStatusCode;
 import io.mosip.registration.processor.core.tracker.dto.TrackRequestDto;
@@ -101,7 +102,7 @@ public class RegistrationTransactionController {
 			responseDto.setRegid(trackRequestDto.getRegid());
 			responseDto.setTransactionId(trackRequestDto.getTransactionId());
 			responseDto.setTransactionFlowId(trackRequestDto.getTransactionFlowId());
-
+			regProcLogger.info("Request for Track " + (new Gson()).toJson(responseDto));
 			TrackerEntity entity = transactionService.isTransactionExist(trackRequestDto.getRegid(), trackRequestDto.getTransactionId(), trackRequestDto.getTransactionFlowId());
 
 			if(entity.getStatusCode().equals(RegistrationTransactionStatusCode.IN_PROGRESS.toString()) || entity.getStatusCode().equals(RegistrationTransactionStatusCode.PROCESSED.toString())) {
@@ -114,6 +115,7 @@ public class RegistrationTransactionController {
 		}catch (Exception e) {
 			if( e instanceof InvalidTokenException |e instanceof AccessDeniedException | e instanceof RegTransactionAppException
 				| e instanceof TransactionsUnavailableException | e instanceof TransactionTableNotAccessibleException | e instanceof JsonProcessingException ) {
+				regProcLogger.error("Error While Processing Tracker" + ExceptionUtils.getStackTrace(e));
 				throw e;
 			}
 			else {
