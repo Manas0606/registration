@@ -10,15 +10,11 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "registration_tracker", schema = "regprc")
-public class TrackerEntity extends BaseTransactionEntity {
+public class TrackerEntity extends BaseTrackerEntity {
 
 	/** The registration id. */
 	@Column(name = "reg_id")
 	private String registrationId;
-
-	/** The trntypecode. */
-	@Column(name = "transaction_id")
-	private String transactionId;
 
 	/** The remarks. */
 	@Column(name = "transaction_flow_id")
@@ -66,7 +62,6 @@ public class TrackerEntity extends BaseTransactionEntity {
 	 * @param statusCode            the status code
 	 */
 	public TrackerEntity(String transactionId, String registrationId, String transactionFlowId, String statusCode) {
-		id = transactionId;
 		this.registrationId = registrationId;
 		this.transactionId = transactionId;
 		this.transactionFlowId = transactionFlowId;
