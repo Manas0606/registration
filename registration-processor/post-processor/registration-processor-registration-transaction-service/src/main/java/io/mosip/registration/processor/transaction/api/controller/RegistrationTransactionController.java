@@ -213,8 +213,9 @@ public class RegistrationTransactionController {
 			@ApiResponse(responseCode = "401", description = "Unauthorized" ,content = @Content(schema = @Schema(hidden = true))),
 			@ApiResponse(responseCode = "403", description = "Forbidden" ,content = @Content(schema = @Schema(hidden = true))),
 			@ApiResponse(responseCode = "404", description = "Not Found" ,content = @Content(schema = @Schema(hidden = true)))})
-	public ResponseEntity<TrackResponseDto> updateTransactionStatus(@RequestBody TrackRequestDto trackRequestDto) throws Exception {
+	public ResponseEntity<TrackResponseDto> updateTransactionStatus(@RequestBody RequestWrapper<TrackRequestDto> request) throws Exception {
 		try {
+			TrackRequestDto trackRequestDto = request.getRequest();
 			TrackResponseDto responseDto = new TrackResponseDto();
 			responseDto.setTransactionId(trackRequestDto.getTransactionId());
 
