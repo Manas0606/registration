@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
+import io.mosip.kernel.core.exception.ExceptionUtils;
 import io.mosip.registration.processor.core.code.RegistrationTransactionStatusCode;
 import io.mosip.registration.processor.core.tracker.dto.TrackRequestDto;
 import io.mosip.registration.processor.core.tracker.dto.TrackResponseDto;
@@ -225,6 +226,7 @@ public class RegistrationTransactionController {
 		}catch (Exception e) {
 			if( e instanceof InvalidTokenException |e instanceof AccessDeniedException | e instanceof RegTransactionAppException
 					| e instanceof TransactionsUnavailableException | e instanceof TransactionTableNotAccessibleException | e instanceof JsonProcessingException ) {
+				regProcLogger.error("Error While Processing Tracker" + ExceptionUtils.getStackTrace(e));
 				throw e;
 			}
 			else {
