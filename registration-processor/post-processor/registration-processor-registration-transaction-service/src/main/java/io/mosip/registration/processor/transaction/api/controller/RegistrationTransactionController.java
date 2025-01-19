@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.google.gson.Gson;
 import io.mosip.kernel.core.exception.ExceptionUtils;
 import io.mosip.registration.processor.core.code.RegistrationTransactionStatusCode;
+import io.mosip.registration.processor.core.http.RequestWrapper;
 import io.mosip.registration.processor.core.tracker.dto.TrackRequestDto;
 import io.mosip.registration.processor.core.tracker.dto.TrackResponseDto;
 import io.mosip.registration.processor.status.entity.TrackerEntity;
@@ -96,13 +97,14 @@ public class RegistrationTransactionController {
 			@ApiResponse(responseCode = "401", description = "Unauthorized" ,content = @Content(schema = @Schema(hidden = true))),
 			@ApiResponse(responseCode = "403", description = "Forbidden" ,content = @Content(schema = @Schema(hidden = true))),
 			@ApiResponse(responseCode = "404", description = "Not Found" ,content = @Content(schema = @Schema(hidden = true)))})
-	public ResponseEntity<TrackResponseDto> getTrackInfo(@RequestBody TrackRequestDto trackRequestDto) throws Exception {
+	public ResponseEntity<TrackResponseDto> getTrackInfo(@RequestBody RequestWrapper<TrackRequestDto> request) throws Exception {
 		try {
+			TrackRequestDto trackRequestDto = request.getRequest();
 			TrackResponseDto responseDto = new TrackResponseDto();
 			responseDto.setRegid(trackRequestDto.getRegid());
 			responseDto.setTransactionId(trackRequestDto.getTransactionId());
 			responseDto.setTransactionFlowId(trackRequestDto.getTransactionFlowId());
-			regProcLogger.info("Request for Track " + (new Gson()).toJson(responseDto));
+			regProcLogger.info("Request for Track " + (new Gson()).toJson(trackRequestDto));
 			TrackerEntity entity = transactionService.isTransactionExist(trackRequestDto.getRegid(), trackRequestDto.getTransactionId(), trackRequestDto.getTransactionFlowId());
 
 			if(entity.getStatusCode().equals(RegistrationTransactionStatusCode.IN_PROGRESS.toString()) || entity.getStatusCode().equals(RegistrationTransactionStatusCode.PROCESSED.toString())) {
