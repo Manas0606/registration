@@ -17,5 +17,5 @@ public class AuthorizedRolesDto {
 
     private List<String> getsearchrid;
 
-    private List<String> gettransactionallowed;
+//    private List<String> gettransactionallowed;
 }
