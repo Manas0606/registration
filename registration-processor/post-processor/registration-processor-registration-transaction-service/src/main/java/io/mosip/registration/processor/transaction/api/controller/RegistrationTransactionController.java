@@ -112,6 +112,7 @@ public class RegistrationTransactionController {
 			} else {
 				responseDto.setTransactionAllowed(true);
 			}
+			regProcLogger.info("Response for Track " + (new Gson()).toJson(responseDto));
 
 			return ResponseEntity.status(HttpStatus.OK).body(responseDto);
 		}catch (Exception e) {

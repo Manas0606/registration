@@ -359,8 +359,9 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 		ResponseWrapper<TrackResponseDto> response = (ResponseWrapper<TrackResponseDto>) restApi
 				.postApi(ApiName.TRACKTRANSACTIONID, "", "",
 						request, ResponseWrapper.class);
-
+		logger.info("Response from API " + objectMapper.writeValueAsString(response));
 		TrackResponseDto trackResponseDto = null;
+
 		if (response.getResponse() != null)
 			trackResponseDto = objectMapper.readValue(JsonUtils.javaObjectToJsonString(response.getResponse()), TrackResponseDto.class);
 
