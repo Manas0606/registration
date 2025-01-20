@@ -121,7 +121,7 @@ public class RegistrationTransactionController {
 			responseWrapper.setResponse(responseDto);
 			regProcLogger.info("Response for Track " + (new Gson()).toJson(responseDto));
 
-			return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
+			return  new ResponseEntity<ResponseWrapper>(responseWrapper, HttpStatus.OK);
 		}catch (Exception e) {
 			if( e instanceof InvalidTokenException |e instanceof AccessDeniedException | e instanceof RegTransactionAppException
 				| e instanceof TransactionsUnavailableException | e instanceof TransactionTableNotAccessibleException | e instanceof JsonProcessingException ) {
@@ -242,7 +242,7 @@ public class RegistrationTransactionController {
 			regProcLogger.info("Response for Track Update" + (new Gson()).toJson(responseDto));
 
 			responseWrapper.setResponse(responseDto);
-			return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
+			return new ResponseEntity<ResponseWrapper>(responseWrapper, HttpStatus.OK);
 		}catch (Exception e) {
 			if( e instanceof InvalidTokenException |e instanceof AccessDeniedException | e instanceof RegTransactionAppException
 					| e instanceof TransactionsUnavailableException | e instanceof TransactionTableNotAccessibleException | e instanceof JsonProcessingException ) {
