@@ -41,7 +41,7 @@ public interface TransactionService<U> {
 	
 	public List<RegistrationTransactionDto> getTransactionByRegId(String regId) throws TransactionsUnavailableException, RegTransactionAppException;
 
-	public TrackerEntity isTransactionExist(String regId, String transactionId, String latestTrnFlowId);
+	public TrackerEntity isTransactionExist(String regId, String transactionId, String latestTrnFlowId, Long startTime);
 
-	public TrackerEntity updateTransactionComplete(String transactionId, String StatusCode) throws TransactionsUnavailableException;
+	public TrackerEntity updateTransactionComplete(String transactionId, String StatusCode, Long startTime) throws TransactionsUnavailableException;
 }

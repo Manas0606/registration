@@ -101,6 +101,7 @@ public class RegistrationTransactionController {
 			@ApiResponse(responseCode = "404", description = "Not Found" ,content = @Content(schema = @Schema(hidden = true)))})
 	public ResponseEntity<ResponseWrapper> getTrackInfo(@RequestBody RequestWrapper<TrackRequestDto> request) throws Exception {
 		try {
+			Long startTime = System.currentTimeMillis();
 			ResponseWrapper<TrackResponseDto> responseWrapper = new ResponseWrapper<>();
 			responseWrapper.setResponsetime(LocalDateTime.now());
 			responseWrapper.setVersion("1.0");
@@ -110,10 +111,10 @@ public class RegistrationTransactionController {
 			responseDto.setRegid(trackRequestDto.getRegid());
 			responseDto.setTransactionId(trackRequestDto.getTransactionId());
 			responseDto.setTransactionFlowId(trackRequestDto.getTransactionFlowId());
-			regProcLogger.info("Request for Track " + (new Gson()).toJson(trackRequestDto));
-			TrackerEntity entity = transactionService.isTransactionExist(trackRequestDto.getRegid(), trackRequestDto.getTransactionId(), trackRequestDto.getTransactionFlowId());
+			regProcLogger.info("Request for Track " + (new Gson()).toJson(trackRequestDto) + " " + (System.currentTimeMillis() - startTime) + " ms");
+			TrackerEntity entity = transactionService.isTransactionExist(trackRequestDto.getRegid(), trackRequestDto.getTransactionId(), trackRequestDto.getTransactionFlowId(), startTime);
 
-			regProcLogger.info("Request for Track " + entity.getStatusCode());
+			regProcLogger.info("Request for Track " + entity.getStatusCode() + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 			if(entity.getStatusCode().equals(RegistrationTransactionStatusCode.IN_PROGRESS.toString()) || entity.getStatusCode().equals(RegistrationTransactionStatusCode.PROCESSED.toString())) {
 				responseDto.setTransactionAllowed(false);
@@ -225,6 +226,7 @@ public class RegistrationTransactionController {
 			@ApiResponse(responseCode = "404", description = "Not Found" ,content = @Content(schema = @Schema(hidden = true)))})
 	public ResponseEntity<ResponseWrapper> updateTransactionStatus(@RequestBody RequestWrapper<TrackRequestDto> request) throws Exception {
 		try {
+			Long startTime = System.currentTimeMillis();
 			ResponseWrapper<TrackResponseDto> responseWrapper = new ResponseWrapper<>();
 			responseWrapper.setResponsetime(LocalDateTime.now());
 			responseWrapper.setVersion("1.0");
@@ -232,16 +234,16 @@ public class RegistrationTransactionController {
 			TrackRequestDto trackRequestDto = request.getRequest();
 			TrackResponseDto responseDto = new TrackResponseDto();
 			responseDto.setTransactionId(trackRequestDto.getTransactionId());
-			regProcLogger.info("Request for Track Update" + (new Gson()).toJson(trackRequestDto));
+			regProcLogger.info("Request for Track Update" + (new Gson()).toJson(trackRequestDto)  + " " + (System.currentTimeMillis() - startTime) + " ms");
 
-			TrackerEntity entity = transactionService.updateTransactionComplete(trackRequestDto.getTransactionId(), trackRequestDto.getStatusCode());
+			TrackerEntity entity = transactionService.updateTransactionComplete(trackRequestDto.getTransactionId(), trackRequestDto.getStatusCode(), startTime);
 
 			if(entity.getStatusCode().equals(trackRequestDto.getStatusCode())) {
 				responseDto.setTransactionAllowed(true);
 			} else {
 				responseDto.setTransactionAllowed(false);
 			}
-			regProcLogger.info("Response for Track Update" + (new Gson()).toJson(responseDto));
+			regProcLogger.info("Response for Track Update" + (new Gson()).toJson(responseDto)  + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 			responseWrapper.setResponse(responseDto);
 			return new ResponseEntity<ResponseWrapper>(responseWrapper, HttpStatus.OK);

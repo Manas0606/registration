@@ -139,10 +139,12 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 	}
 
 	@Override
-	public TrackerEntity isTransactionExist(String regId, String transactionId, String latestTrnFlowId) {
+	public TrackerEntity isTransactionExist(String regId, String transactionId, String latestTrnFlowId, Long startTime) {
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
-				"TransactionServiceImpl::isTransactionExist()::entry");
+				"TransactionServiceImpl::isTransactionExist()::entry" + " " + (System.currentTimeMillis() - startTime) + " ms");
 		TrackerEntity entity = trackerRepository.findByRegIdAndTransactionIdAndFlowId(regId, transactionId, latestTrnFlowId);
+		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
+				"TransactionServiceImpl::isTransactionExist()::Record Found" + " " + (System.currentTimeMillis() - startTime) + " ms");
 		if(entity == null) {
 			entity = new TrackerEntity();
 			entity.setRegistrationId(regId);
@@ -151,22 +153,25 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 			entity.setStatusCode(RegistrationTransactionStatusCode.IN_PROGRESS.toString());
 			entity.setCreateDateTime(LocalDateTime.now());
 			trackerRepository.save(entity);
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
+					"TransactionServiceImpl::isTransactionExist()::Writing Record" + " " + (System.currentTimeMillis() - startTime) + " ms");
+
 			entity.setStatusCode(RegistrationTransactionStatusCode.PROCESSING.toString());
 		}
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
-				"TransactionServiceImpl::isTransactionExist()::exist");
+				"TransactionServiceImpl::isTransactionExist()::exist" + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 		return entity;
 	}
 
 	@Override
-	public TrackerEntity updateTransactionComplete(String transactionId, String StatusCode) throws TransactionsUnavailableException {
+	public TrackerEntity updateTransactionComplete(String transactionId, String StatusCode, Long startTime) throws TransactionsUnavailableException {
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), transactionId,
-				"TransactionServiceImpl::updateTransactionComplete()::entry");
+				"TransactionServiceImpl::updateTransactionComplete()::entry" + " " + (System.currentTimeMillis() - startTime) + " ms");
 		TrackerEntity entity = trackerRepository.findByTransactionId(transactionId);
 		if(entity != null) {
 			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), transactionId,
-					"TransactionServiceImpl::updateTransactionComplete()::Entity Found Updating same for Transaction Id " + transactionId);
+					"TransactionServiceImpl::updateTransactionComplete()::Entity Found Updating same for Transaction Id " + transactionId + " " + (System.currentTimeMillis() - startTime) + " ms");
 			entity.setStatusCode(StatusCode);
 			entity.setUpdatedBy("MOSIP");
 			entity.setUpdateDateTime(LocalDateTime.now());
@@ -174,10 +179,10 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 		} else {
 			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), transactionId,
 					"TransactionServiceImpl::updateTransactionComplete()::Entity not Found for Transaction Id" + transactionId);
-			throw new TransactionsUnavailableException(PlatformErrorMessages.RPR_PGS_NO_RECORDS_EXCEPTION.getCode(), "Record Not Found for the Transaction Id : " + transactionId);
+			throw new TransactionsUnavailableException(PlatformErrorMessages.RPR_PGS_NO_RECORDS_EXCEPTION.getCode(), "Record Not Found for the Transaction Id : " + transactionId  + " " + (System.currentTimeMillis() - startTime) + " ms");
 		}
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), transactionId,
-				"TransactionServiceImpl::updateTransactionComplete()::exist");
+				"TransactionServiceImpl::updateTransactionComplete()::exist"  + " " + (System.currentTimeMillis() - startTime) + " ms");
 
 		return entity;
 	}
