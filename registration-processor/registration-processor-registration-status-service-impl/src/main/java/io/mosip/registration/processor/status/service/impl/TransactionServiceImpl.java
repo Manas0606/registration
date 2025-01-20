@@ -164,11 +164,15 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 				"TransactionServiceImpl::updateTransactionComplete()::entry");
 		TrackerEntity entity = trackerRepository.findByTransactionId(transactionId);
 		if(entity != null) {
+			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), transactionId,
+					"TransactionServiceImpl::updateTransactionComplete()::Entity Found Updating same for Transaction Id " + transactionId);
 			entity.setStatusCode(StatusCode);
 			entity.setUpdatedBy("MOSIP");
 			entity.setUpdateDateTime(LocalDateTime.now());
 			trackerRepository.save(entity);
 		} else {
+			regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), transactionId,
+					"TransactionServiceImpl::updateTransactionComplete()::Entity not Found for Transaction Id" + transactionId);
 			throw new TransactionsUnavailableException(PlatformErrorMessages.RPR_PGS_NO_RECORDS_EXCEPTION.getCode(), "Record Not Found for the Transaction Id : " + transactionId);
 		}
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), transactionId,

@@ -218,6 +218,7 @@ public class RegistrationTransactionController {
 			TrackRequestDto trackRequestDto = request.getRequest();
 			TrackResponseDto responseDto = new TrackResponseDto();
 			responseDto.setTransactionId(trackRequestDto.getTransactionId());
+			regProcLogger.info("Request for Track Update" + (new Gson()).toJson(trackRequestDto));
 
 			TrackerEntity entity = transactionService.updateTransactionComplete(trackRequestDto.getTransactionId(), trackRequestDto.getStatusCode());
 
@@ -226,6 +227,7 @@ public class RegistrationTransactionController {
 			} else {
 				responseDto.setTransactionAllowed(false);
 			}
+			regProcLogger.info("Response for Track Update" + (new Gson()).toJson(responseDto));
 
 			return ResponseEntity.status(HttpStatus.OK).body(responseDto);
 		}catch (Exception e) {
