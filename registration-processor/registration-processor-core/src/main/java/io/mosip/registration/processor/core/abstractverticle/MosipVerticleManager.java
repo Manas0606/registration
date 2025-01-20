@@ -52,6 +52,7 @@ import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.springframework.http.ResponseEntity;
 
 /**
  * This abstract class is Vert.x implementation for MOSIP.
@@ -356,14 +357,14 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 		request.setVersion(VERSION);
 		request.setRequesttime(DateUtils.getUTCCurrentDateTime());
 		request.setRequest(trackRequestDto);
-		ResponseWrapper<TrackResponseDto> response = (ResponseWrapper<TrackResponseDto>) restApi
+		ResponseEntity<TrackResponseDto> response = (ResponseEntity<TrackResponseDto>) restApi
 				.postApi(ApiName.TRACKTRANSACTIONID, "", "",
-						request, ResponseWrapper.class);
+						request, ResponseEntity.class);
 		logger.info("Response from API " + objectMapper.writeValueAsString(response));
 		TrackResponseDto trackResponseDto = null;
 
-		if (response.getResponse() != null)
-			trackResponseDto = objectMapper.readValue(JsonUtils.javaObjectToJsonString(response.getResponse()), TrackResponseDto.class);
+		if (response.getBody() != null)
+			trackResponseDto = objectMapper.readValue(JsonUtils.javaObjectToJsonString(response.getBody()), TrackResponseDto.class);
 
 		return trackResponseDto.isTransactionAllowed();
 	}
@@ -377,12 +378,12 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 		request.setVersion(VERSION);
 		request.setRequesttime(DateUtils.getUTCCurrentDateTime());
 		request.setRequest(trackRequestDto);
-		ResponseWrapper<TrackResponseDto> response = (ResponseWrapper<TrackResponseDto>) restApi.postApi(ApiName.UPDATETRANSACTIONID, "", "",
-						request, ResponseWrapper.class);
+		ResponseEntity<TrackResponseDto> response = (ResponseEntity<TrackResponseDto>) restApi.postApi(ApiName.UPDATETRANSACTIONID, "", "",
+						request, ResponseEntity.class);
 
 		TrackResponseDto trackResponseDto = null;
-		if (response.getResponse() != null)
-			trackResponseDto = objectMapper.readValue(JsonUtils.javaObjectToJsonString(response.getResponse()), TrackResponseDto.class);
+		if (response.getBody() != null)
+			trackResponseDto = objectMapper.readValue(JsonUtils.javaObjectToJsonString(response.getBody()), TrackResponseDto.class);
 
 		return trackResponseDto.isTransactionAllowed();
 	}

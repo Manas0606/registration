@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import io.mosip.kernel.core.exception.ExceptionUtils;
 import io.mosip.registration.processor.core.code.RegistrationTransactionStatusCode;
 import io.mosip.registration.processor.core.http.RequestWrapper;
+import io.mosip.registration.processor.core.http.ResponseWrapper;
 import io.mosip.registration.processor.core.tracker.dto.TrackRequestDto;
 import io.mosip.registration.processor.core.tracker.dto.TrackResponseDto;
 import io.mosip.registration.processor.status.entity.TrackerEntity;
