@@ -1,5 +1,6 @@
 package io.mosip.registration.processor.transaction.api.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -98,8 +99,12 @@ public class RegistrationTransactionController {
 			@ApiResponse(responseCode = "401", description = "Unauthorized" ,content = @Content(schema = @Schema(hidden = true))),
 			@ApiResponse(responseCode = "403", description = "Forbidden" ,content = @Content(schema = @Schema(hidden = true))),
 			@ApiResponse(responseCode = "404", description = "Not Found" ,content = @Content(schema = @Schema(hidden = true)))})
-	public ResponseEntity<TrackResponseDto> getTrackInfo(@RequestBody RequestWrapper<TrackRequestDto> request) throws Exception {
+	public ResponseEntity<ResponseWrapper> getTrackInfo(@RequestBody RequestWrapper<TrackRequestDto> request) throws Exception {
 		try {
+			ResponseWrapper<TrackResponseDto> responseWrapper = new ResponseWrapper<>();
+			responseWrapper.setResponsetime(LocalDateTime.now());
+			responseWrapper.setVersion("1.0");
+
 			TrackRequestDto trackRequestDto = request.getRequest();
 			TrackResponseDto responseDto = new TrackResponseDto();
 			responseDto.setRegid(trackRequestDto.getRegid());
@@ -113,9 +118,10 @@ public class RegistrationTransactionController {
 			} else {
 				responseDto.setTransactionAllowed(true);
 			}
+			responseWrapper.setResponse(responseDto);
 			regProcLogger.info("Response for Track " + (new Gson()).toJson(responseDto));
 
-			return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+			return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
 		}catch (Exception e) {
 			if( e instanceof InvalidTokenException |e instanceof AccessDeniedException | e instanceof RegTransactionAppException
 				| e instanceof TransactionsUnavailableException | e instanceof TransactionTableNotAccessibleException | e instanceof JsonProcessingException ) {
@@ -215,8 +221,12 @@ public class RegistrationTransactionController {
 			@ApiResponse(responseCode = "401", description = "Unauthorized" ,content = @Content(schema = @Schema(hidden = true))),
 			@ApiResponse(responseCode = "403", description = "Forbidden" ,content = @Content(schema = @Schema(hidden = true))),
 			@ApiResponse(responseCode = "404", description = "Not Found" ,content = @Content(schema = @Schema(hidden = true)))})
-	public ResponseEntity<TrackResponseDto> updateTransactionStatus(@RequestBody RequestWrapper<TrackRequestDto> request) throws Exception {
+	public ResponseEntity<ResponseWrapper> updateTransactionStatus(@RequestBody RequestWrapper<TrackRequestDto> request) throws Exception {
 		try {
+			ResponseWrapper<TrackResponseDto> responseWrapper = new ResponseWrapper<>();
+			responseWrapper.setResponsetime(LocalDateTime.now());
+			responseWrapper.setVersion("1.0");
+
 			TrackRequestDto trackRequestDto = request.getRequest();
 			TrackResponseDto responseDto = new TrackResponseDto();
 			responseDto.setTransactionId(trackRequestDto.getTransactionId());
@@ -231,7 +241,8 @@ public class RegistrationTransactionController {
 			}
 			regProcLogger.info("Response for Track Update" + (new Gson()).toJson(responseDto));
 
-			return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+			responseWrapper.setResponse(responseDto);
+			return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
 		}catch (Exception e) {
 			if( e instanceof InvalidTokenException |e instanceof AccessDeniedException | e instanceof RegTransactionAppException
 					| e instanceof TransactionsUnavailableException | e instanceof TransactionTableNotAccessibleException | e instanceof JsonProcessingException ) {

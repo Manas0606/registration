@@ -357,14 +357,14 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 		request.setVersion(VERSION);
 		request.setRequesttime(DateUtils.getUTCCurrentDateTime());
 		request.setRequest(trackRequestDto);
-		ResponseEntity<TrackResponseDto> response = (ResponseEntity<TrackResponseDto>) restApi
+		ResponseWrapper<TrackResponseDto> response = (ResponseWrapper<TrackResponseDto>) restApi
 				.postApi(ApiName.TRACKTRANSACTIONID, "", "",
-						request, ResponseEntity.class);
+						request, ResponseWrapper.class);
 		logger.info("Response from API " + objectMapper.writeValueAsString(response));
 		TrackResponseDto trackResponseDto = null;
 
-		if (response.getBody() != null)
-			trackResponseDto = objectMapper.readValue(JsonUtils.javaObjectToJsonString(response.getBody()), TrackResponseDto.class);
+		if (response.getResponse() != null)
+			trackResponseDto = objectMapper.readValue(JsonUtils.javaObjectToJsonString(response.getResponse()), TrackResponseDto.class);
 
 		return trackResponseDto.isTransactionAllowed();
 	}
@@ -378,12 +378,12 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 		request.setVersion(VERSION);
 		request.setRequesttime(DateUtils.getUTCCurrentDateTime());
 		request.setRequest(trackRequestDto);
-		ResponseEntity<TrackResponseDto> response = (ResponseEntity<TrackResponseDto>) restApi.postApi(ApiName.UPDATETRANSACTIONID, "", "",
-						request, ResponseEntity.class);
+		ResponseWrapper<TrackResponseDto> response = (ResponseWrapper<TrackResponseDto>) restApi.postApi(ApiName.UPDATETRANSACTIONID, "", "",
+						request, ResponseWrapper.class);
 
 		TrackResponseDto trackResponseDto = null;
-		if (response.getBody() != null)
-			trackResponseDto = objectMapper.readValue(JsonUtils.javaObjectToJsonString(response.getBody()), TrackResponseDto.class);
+		if (response.getResponse() != null)
+			trackResponseDto = objectMapper.readValue(JsonUtils.javaObjectToJsonString(response.getResponse()), TrackResponseDto.class);
 
 		return trackResponseDto.isTransactionAllowed();
 	}
