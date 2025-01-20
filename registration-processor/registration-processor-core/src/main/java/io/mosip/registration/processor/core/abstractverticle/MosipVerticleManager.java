@@ -199,7 +199,7 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 					if(isTransactionAllowed(messageDTO.getTransactionFlowId(), messageDTO.getTransactionId(), messageDTO.getRid())) {
 						MessageDTO result = process(messageDTO);
 						addTagsToMessageDTO(result);
-						updateTransactionStatus(messageDTO.getTransactionId(), RegistrationTransactionStatusCode.PROCESSED.toString());
+						updateTransactionStatus(messageDTO.getTransactionId(), ((messageDTO.getIsValid() && !messageDTO.getInternalError()) ? RegistrationTransactionStatusCode.PROCESSED.toString() : RegistrationTransactionStatusCode.FAILED.toString()));
 						result.setLastHopTimestamp(DateUtils.formatToISOString(DateUtils.getUTCCurrentDateTime()));
 						result.setTransactionId(UUID.randomUUID().toString());
 						future.complete(result);
@@ -273,7 +273,7 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 
 				if(isTransactionAllowed(messageDTO.getTransactionFlowId(), messageDTO.getTransactionId(), messageDTO.getRid())) {
 					MessageDTO result = process(messageDTO);
-					updateTransactionStatus(messageDTO.getTransactionId(), RegistrationTransactionStatusCode.PROCESSED.toString());
+					updateTransactionStatus(messageDTO.getTransactionId(), ((messageDTO.getIsValid() && !messageDTO.getInternalError()) ? RegistrationTransactionStatusCode.PROCESSED.toString() : RegistrationTransactionStatusCode.FAILED.toString()));
 					result.setTransactionId(UUID.randomUUID().toString());
 					future.complete(result);
 				} else {
