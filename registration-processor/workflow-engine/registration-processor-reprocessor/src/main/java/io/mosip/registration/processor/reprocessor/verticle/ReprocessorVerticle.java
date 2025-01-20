@@ -1,11 +1,6 @@
 package io.mosip.registration.processor.reprocessor.verticle;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import io.mosip.registration.processor.status.utilities.RegistrationUtility;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -283,6 +278,7 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 								dto.setSubStatusCode(StatusUtil.RE_PROCESS_RESTART_FROM_STAGE.getCode());
 								dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
 							messageDTO.setTransactionFlowId(dto.getLatestTransactionFlowId());
+							messageDTO.setTransactionId(UUID.randomUUID().toString());
 							sendAndSetStatus(dto, messageDTO, stageName);
 							description
 										.setMessage(
@@ -308,6 +304,7 @@ public class ReprocessorVerticle extends MosipVerticleAPIManager {
 							dto.setLatestTransactionFlowId(RegistrationUtility.generateId());
 						}
 						messageDTO.setTransactionFlowId(dto.getLatestTransactionFlowId());
+						messageDTO.setTransactionId(UUID.randomUUID().toString());
 
 						sendAndSetStatus(dto, messageDTO, stageName);
 						description.setMessage(PlatformSuccessMessages.RPR_SENT_TO_REPROCESS_SUCCESS.getMessage());

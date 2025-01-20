@@ -205,8 +205,12 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 						result.setTransactionId(UUID.randomUUID().toString());
 						future.complete(result);
 					} else {
-						future.fail(new DuplicateTransactionException("rid: " + messageDTO.getRid() +
-								" TransactionId " + messageDTO.getTransactionId() + " Transaction Flow Id " + messageDTO.getTransactionFlowId()));
+						DuplicateTransactionException duplicateTransactionException = new DuplicateTransactionException("rid: " + messageDTO.getRid() +
+								" TransactionId " + messageDTO.getTransactionId() + " Transaction Flow Id " + messageDTO.getTransactionFlowId());
+						logger.error("{} -- {} {} {}",
+								PlatformErrorMessages.RPR_SYS_STAGE_PROCESSING_FAILED.getCode(),
+								PlatformErrorMessages.RPR_SYS_STAGE_PROCESSING_FAILED.getMessage(),duplicateTransactionException.getMessage(), ExceptionUtils.getStackTrace(duplicateTransactionException));
+						future.complete();
 						return;
 					}
 				} catch (Exception e) {
@@ -278,8 +282,12 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 					result.setTransactionId(UUID.randomUUID().toString());
 					future.complete(result);
 				} else {
-					future.fail(new DuplicateTransactionException("rid: " + messageDTO.getRid() +
-							" TransactionId " + messageDTO.getTransactionId() + " Transaction Flow Id " + messageDTO.getTransactionFlowId()));
+					DuplicateTransactionException duplicateTransactionException = new DuplicateTransactionException("rid: " + messageDTO.getRid() +
+							" TransactionId " + messageDTO.getTransactionId() + " Transaction Flow Id " + messageDTO.getTransactionFlowId());
+					logger.error("{} -- {} {} {}",
+							PlatformErrorMessages.RPR_SYS_STAGE_PROCESSING_FAILED.getCode(),
+							PlatformErrorMessages.RPR_SYS_STAGE_PROCESSING_FAILED.getMessage(),duplicateTransactionException.getMessage(), ExceptionUtils.getStackTrace(duplicateTransactionException));
+					future.complete();
 					return;
 				}
 				} catch (Exception e) {
