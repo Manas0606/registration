@@ -151,6 +151,7 @@ public class TransactionServiceImpl implements TransactionService<TransactionDto
 			entity.setStatusCode(RegistrationTransactionStatusCode.IN_PROGRESS.toString());
 			entity.setCreateDateTime(LocalDateTime.now());
 			trackerRepository.save(entity);
+			entity.setStatusCode(RegistrationTransactionStatusCode.PROCESSING.toString());
 		}
 		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), regId,
 				"TransactionServiceImpl::isTransactionExist()::exist");

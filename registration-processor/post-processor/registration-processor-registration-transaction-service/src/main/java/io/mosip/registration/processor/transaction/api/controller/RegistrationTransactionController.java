@@ -113,6 +113,8 @@ public class RegistrationTransactionController {
 			regProcLogger.info("Request for Track " + (new Gson()).toJson(trackRequestDto));
 			TrackerEntity entity = transactionService.isTransactionExist(trackRequestDto.getRegid(), trackRequestDto.getTransactionId(), trackRequestDto.getTransactionFlowId());
 
+			regProcLogger.info("Request for Track " + entity.getStatusCode());
+
 			if(entity.getStatusCode().equals(RegistrationTransactionStatusCode.IN_PROGRESS.toString()) || entity.getStatusCode().equals(RegistrationTransactionStatusCode.PROCESSED.toString())) {
 				responseDto.setTransactionAllowed(false);
 			} else {
