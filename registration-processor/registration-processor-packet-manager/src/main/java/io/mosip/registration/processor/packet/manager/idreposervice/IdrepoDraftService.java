@@ -100,7 +100,8 @@ public class IdrepoDraftService {
             idRequestDto.setRequest(requestDto);
 
         }
-
+        String requestString = mapper.writeValueAsString(idRequestDto);
+        regProcLogger.info("Request sent for patch API - " + id + " - " + requestString);
         IdResponseDTO response = (IdResponseDTO) registrationProcessorRestClientService.patchApi(
                 ApiName.IDREPOUPDATEDRAFT, Lists.newArrayList(id), null, null, idRequestDto, IdResponseDTO.class);
         if (response.getErrors() != null && !response.getErrors().isEmpty()) {
