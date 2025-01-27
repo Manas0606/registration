@@ -100,11 +100,11 @@ public class IdrepoDraftService {
             idRequestDto.setRequest(requestDto);
 
         }
-        String requestString = mapper.writeValueAsString(idRequestDto);
-        regProcLogger.info("Request sent for patch API - " + id + " - " + requestString);
         IdResponseDTO response = (IdResponseDTO) registrationProcessorRestClientService.patchApi(
                 ApiName.IDREPOUPDATEDRAFT, Lists.newArrayList(id), null, null, idRequestDto, IdResponseDTO.class);
         if (response.getErrors() != null && !response.getErrors().isEmpty()) {
+            String requestString = mapper.writeValueAsString(idRequestDto);
+            regProcLogger.info("Request sent for patch API - " + id + " - " + requestString);
 			ErrorDTO error = response.getErrors().get(0);
 			regProcLogger.error("Error occured while updating draft for id : " + id, error.toString());
 			if (response.getErrors().get(0).getErrorCode().equalsIgnoreCase(ID_REPO_KEY_MANAGER_ERROR)) {
