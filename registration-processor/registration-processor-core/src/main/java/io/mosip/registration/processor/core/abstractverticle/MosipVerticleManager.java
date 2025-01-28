@@ -96,6 +96,12 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 	 */
 	@Value("#{T(java.util.Arrays).asList('${mosip.regproc.stage-common.bus-out-halt-addresses:}')}")
 	protected List<String> busOutHaltAddresses;
+
+	/*
+	 * Comma separated out bus message addresses for which skip tagging message will not be sent out from any stage
+	 */
+	@Value("#{T(java.util.Arrays).asList('${mosip.regproc.stage-common.bus-out-skip-tags:packet-receiver-bus-out,packet-uploader-bus-out,securezone-notification-bus-out}')}")
+	protected List<String> tagSkipBusOutAddress;
 	
 	@Autowired
 	private MosipEventBusFactory mosipEventBusFactory;
@@ -230,6 +236,9 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 		});
 	}
 
+	public boolean isTagSkipEnabled(String toAddress) {
+		return tagSkipBusOutAddress.contains(toAddress);
+	}
 	/**
 	 * Send.
 	 *
@@ -243,7 +252,9 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 	public void send(MosipEventBus mosipEventBus, MessageBusAddress toAddress, MessageDTO message) {
 		if(busOutHaltAddresses.contains(toAddress.getAddress()))
 			return;
-		addTagsToMessageDTO(message);
+
+		if(!isTagSkipEnabled(toAddress.getAddress()))
+			addTagsToMessageDTO(message);
 		message.setLastHopTimestamp(DateUtils.formatToISOString(DateUtils.getUTCCurrentDateTime()));
 		message.setTransactionId(UUID.randomUUID().toString());
 		mosipEventBus.send(toAddress, message);

@@ -89,7 +89,7 @@ public class RegistrationTransactionController {
 	 * @return list of RegTransactionResponseDTOs
 	 * @throws Exception
 	 */
-	@PreAuthorize("hasAnyRole(@authorizedTransactionRoles.getGetsearchrid())")
+	@PreAuthorize("hasAnyRole(@authorizedTransactionRoles.getGettransactionallowed())")
 	//@PreAuthorize("hasAnyRole('REGISTRATION_PROCESSOR','REGISTRATION_ADMIN')")
 	@PostMapping(path = "/track/transaction", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@Operation(summary = "Track Transaction Id from entity", description = "Track Transaction Id from entity", tags = { "Registration Track" })
@@ -214,7 +214,7 @@ public class RegistrationTransactionController {
 	 * @return list of RegTransactionResponseDTOs
 	 * @throws Exception
 	 */
-	@PreAuthorize("hasAnyRole(@authorizedTransactionRoles.getGetsearchrid())")
+	@PreAuthorize("hasAnyRole(@authorizedTransactionRoles.getGettransactionallowed())")
 	//@PreAuthorize("hasAnyRole('REGISTRATION_PROCESSOR','REGISTRATION_ADMIN')")
 	@PostMapping(path = "/update/transaction", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@Operation(summary = "Track Transaction Id from entity", description = "Track Transaction Id from entity", tags = { "Registration Track" })
