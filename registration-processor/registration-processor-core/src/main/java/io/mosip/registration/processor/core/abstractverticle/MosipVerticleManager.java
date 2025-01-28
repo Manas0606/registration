@@ -253,8 +253,10 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 		if(busOutHaltAddresses.contains(toAddress.getAddress()))
 			return;
 
+		message.setTags(new HashMap<>());
 		if(!isTagSkipEnabled(toAddress.getAddress()))
 			addTagsToMessageDTO(message);
+
 		message.setLastHopTimestamp(DateUtils.formatToISOString(DateUtils.getUTCCurrentDateTime()));
 		message.setTransactionId(UUID.randomUUID().toString());
 		mosipEventBus.send(toAddress, message);
@@ -354,7 +356,6 @@ public abstract class MosipVerticleManager extends AbstractVerticle
 
 	private void addTagsToMessageDTO(MessageDTO messageDTO) {
 		if(isTagLoadingDisabled()) {
-			messageDTO.setTags(new HashMap<>());
 			return;
 		}
 		try {
